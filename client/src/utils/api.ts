@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Get API URL from environment variable with a fallback
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 console.log('API URL configured as:', API_URL);
 

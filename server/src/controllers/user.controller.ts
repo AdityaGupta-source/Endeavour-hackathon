@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../config/database';
-import { hashPassword } from '../utils/password.utils';
+import { hashPassword, comparePassword } from '../utils/password.utils';
 import Joi from 'joi';
 
 // Get user profile by ID
@@ -448,5 +448,3 @@ export const changePassword = async (req: Request, res: Response) => {
   }
 };
 
-// Import the comparePassword function
-import { comparePassword } from '../utils/password.utils'; 

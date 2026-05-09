@@ -1,25 +1,27 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import * as userController from '../controllers/user.controller';
+import { authenticate, isOwnerOrAdmin } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
-// GET user profile by ID
-router.get('/:id', function(req: Request, res: Response) {
-  res.status(200).json({ message: `Get user ${req.params.id} - Endpoint to be implemented` });
+// GET user profile by ID (protected)
+router.get('/:id', authenticate, async (req, res, next) => {
+	await userController.getUserProfile(req, res);
 });
 
-// UPDATE user profile
-router.put('/:id', function(req: Request, res: Response) {
-  res.status(200).json({ message: `Update user ${req.params.id} - Endpoint to be implemented` });
+// UPDATE user profile (owner or admin)
+router.put('/:id', authenticate, isOwnerOrAdmin, async (req, res, next) => {
+	await userController.updateUserProfile(req, res);
 });
 
-// Add a certification to user profile
-router.post('/:id/certifications', function(req: Request, res: Response) {
-  res.status(201).json({ message: `Add certification for user ${req.params.id} - Endpoint to be implemented` });
+// Add a certification to user profile (owner or admin)
+router.post('/:id/certifications', authenticate, isOwnerOrAdmin, async (req, res, next) => {
+	await userController.addCertification(req, res);
 });
 
-// Change user password
-router.put('/:id/password', function(req: Request, res: Response) {
-  res.status(200).json({ message: `Change password for user ${req.params.id} - Endpoint to be implemented` });
+// Change user password (owner or admin)
+router.put('/:id/password', authenticate, isOwnerOrAdmin, async (req, res, next) => {
+	await userController.changePassword(req, res);
 });
 
 export default router;

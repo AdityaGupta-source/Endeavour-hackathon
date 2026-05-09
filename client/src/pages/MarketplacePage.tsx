@@ -102,19 +102,19 @@ const CategoryButton = styled.button<{ isActive: boolean }>`
   padding: 0.5rem 1rem;
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  background-color: ${({ isActive, theme }) => 
+  background-color: ${({ isActive, theme }) =>
     isActive ? theme.colors.primary.main : theme.colors.background.paper};
-  color: ${({ isActive, theme }) => 
+  color: ${({ isActive, theme }) =>
     isActive ? theme.colors.white : theme.colors.text.primary};
-  font-weight: ${({ isActive, theme }) => 
+  font-weight: ${({ isActive, theme }) =>
     isActive ? theme.typography.fontWeights.medium : theme.typography.fontWeights.regular};
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: ${({ theme }) => theme.shadows.sm};
   
   &:hover {
-    background-color: ${({ isActive, theme }) => 
-      isActive ? theme.colors.primary.dark : theme.colors.primary.light};
+    background-color: ${({ isActive, theme }) =>
+    isActive ? theme.colors.primary.dark : theme.colors.primary.light};
     color: ${({ theme }) => theme.colors.white};
   }
 `;
@@ -167,7 +167,7 @@ const MaterialImage = styled.img`
   width: 100%;
   height: 180px;
   object-fit: cover;
-  background-color: #f0f0f0; /* Light gray background for image placeholders */
+  background-color: ${({ theme }) => theme.colors.background.default}; /* Dark background for image placeholders */
   display: block; /* Ensures no extra space below the image */
   border-top-left-radius: ${({ theme }) => theme.borderRadius.lg};
   border-top-right-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -240,53 +240,53 @@ const MarketplacePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMaterials, setFilteredMaterials] = useState(mockMaterials);
-  const [imageErrors, setImageErrors] = useState<{[key: number]: boolean}>({});
-  
+  const [imageErrors, setImageErrors] = useState<{ [key: number]: boolean }>({});
+
   // Handle image loading errors
   const handleImageError = (materialId: number, category: string) => {
-    setImageErrors(prev => ({...prev, [materialId]: true}));
+    setImageErrors(prev => ({ ...prev, [materialId]: true }));
   };
-  
+
   // Function to get correct image source
   const getImageSource = (material: typeof mockMaterials[0]) => {
     if (imageErrors[material.id]) {
-      return materialFallbackImages[material.category as keyof typeof materialFallbackImages] || 
-             materialFallbackImages.Default;
+      return materialFallbackImages[material.category as keyof typeof materialFallbackImages] ||
+        materialFallbackImages.Default;
     }
     return material.image;
   };
-  
+
   // Filter materials based on category and search query
   useEffect(() => {
     let filtered = mockMaterials;
-    
+
     // Filter by category
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(material => material.category === selectedCategory);
     }
-    
+
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(material => 
-        material.name.toLowerCase().includes(query) || 
+      filtered = filtered.filter(material =>
+        material.name.toLowerCase().includes(query) ||
         material.description.toLowerCase().includes(query)
       );
     }
-    
+
     setFilteredMaterials(filtered);
   }, [selectedCategory, searchQuery]);
-  
+
   return (
     <PageContainer>
       <Header>
         <Title>Marketplace</Title>
       </Header>
-      
+
       <FilterSection>
         <FilterLabel>Categories:</FilterLabel>
         {categories.map(category => (
-          <CategoryButton 
+          <CategoryButton
             key={category}
             isActive={selectedCategory === category}
             onClick={() => setSelectedCategory(category)}
@@ -295,29 +295,29 @@ const MarketplacePage: React.FC = () => {
           </CategoryButton>
         ))}
       </FilterSection>
-      
+
       <FilterSection>
-        <SearchInput 
+        <SearchInput
           type="text"
           placeholder="Search materials..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </FilterSection>
-      
+
       <MaterialsGrid>
         {filteredMaterials.length > 0 ? (
           filteredMaterials.map(material => (
-            <MaterialCard 
+            <MaterialCard
               key={material.id}
               whileHover={{ y: -5 }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <MaterialImage 
-                src={getImageSource(material)} 
-                alt={material.name} 
+              <MaterialImage
+                src={getImageSource(material)}
+                alt={material.name}
                 onError={() => handleImageError(material.id, material.category)}
               />
               <MaterialContent>

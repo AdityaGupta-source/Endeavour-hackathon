@@ -60,10 +60,12 @@ const getVariantStyles = (variant: ButtonVariant, theme: any) => {
     case 'primary':
       return css`
         background-color: ${theme.colors.primary.main};
-        color: white;
+        color: #0A0F16;
+        box-shadow: 0 0 10px ${theme.colors.primary.main}60;
         
         &:hover:not(:disabled) {
-          background-color: ${theme.colors.primary.dark};
+          background-color: ${theme.colors.primary.light};
+          box-shadow: 0 0 20px ${theme.colors.primary.main};
         }
       `;
     case 'secondary':
@@ -80,9 +82,11 @@ const getVariantStyles = (variant: ButtonVariant, theme: any) => {
         background-color: transparent;
         border: 1px solid ${theme.colors.primary.main};
         color: ${theme.colors.primary.main};
+        box-shadow: inset 0 0 5px transparent, 0 0 5px transparent;
         
         &:hover:not(:disabled) {
-          background-color: ${theme.colors.primary.light}20;
+          background-color: ${theme.colors.primary.main}15;
+          box-shadow: inset 0 0 10px ${theme.colors.primary.main}40, 0 0 10px ${theme.colors.primary.main}40;
         }
       `;
     case 'text':
@@ -91,9 +95,12 @@ const getVariantStyles = (variant: ButtonVariant, theme: any) => {
         color: ${theme.colors.primary.main};
         padding-left: 0.5rem;
         padding-right: 0.5rem;
+        transition: all 0.3s ease;
         
         &:hover:not(:disabled) {
-          background-color: ${theme.colors.primary.light}10;
+          background-color: transparent;
+          color: ${theme.colors.primary.light};
+          text-shadow: 0 0 8px ${theme.colors.primary.main};
         }
       `;
     case 'accent':

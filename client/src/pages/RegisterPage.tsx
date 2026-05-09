@@ -167,7 +167,7 @@ const RegisterPage: React.FC = () => {
     password: '',
     confirmPassword: '',
     companyName: '',
-    role: 'company',
+    role: 'seller',
     agreeTerms: false
   });
   
@@ -250,7 +250,7 @@ const RegisterPage: React.FC = () => {
         id: userData.id || Math.floor(Math.random() * 10000),
         name: userData.name || `${formData.firstName} ${formData.lastName}`,
         email: userData.email || formData.email,
-        role: userData.role || formData.role as 'company' | 'transporter' | 'admin',
+        role: userData.role || formData.role as 'seller' | 'buyer' | 'recycler' | 'logistics' | 'admin',
         avatar: userData.avatar || '',
         token: token
       });
@@ -375,10 +375,12 @@ const RegisterPage: React.FC = () => {
               name="role"
               value={formData.role}
               onChange={handleChange}
-              required
-            >
-              <option value="company">Material Supplier/Buyer</option>
-              <option value="transporter">Logistics Provider</option>
+              required>
+              <option value="seller">Seller (Material Supplier)</option>
+              <option value="buyer">Buyer (Material Consumer)</option>
+              <option value="recycler">Recycler / Processor</option>
+              <option value="logistics">Logistics Partner</option>
+              <option value="admin">Platform Admin</option>
             </Select>
           </FormGroup>
           

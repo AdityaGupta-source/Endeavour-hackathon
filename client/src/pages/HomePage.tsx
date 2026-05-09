@@ -34,7 +34,7 @@ const HeroBackground = styled.div`
   z-index: 0;
   height: 100vh;
   width: 100vw;
-  background-color: #f8f9fa;
+  background-color: #0A0F16;
   transition: all 0.5s ease-in-out;
 `;
 
@@ -160,7 +160,7 @@ const FeaturesGrid = styled.div`
 `;
 
 const FeatureCard = styled(motion.div)`
-  background-color: white;
+  background-color: ${({ theme }) => theme.colors.background.paper};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
   box-shadow: ${({ theme }) => theme.shadows.md};
@@ -193,7 +193,8 @@ const FeatureDescription = styled.p`
 `;
 
 const CTASection = styled.section`
-  background-color: ${({ theme }) => theme.colors.primary.main};
+  background-color: ${({ theme }) => theme.colors.background.paper};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
   padding: 4rem 2rem;
   text-align: center;
   color: white;
@@ -220,9 +221,9 @@ const CTADescription = styled.p`
 const CTAButton = styled(Link)`
   display: inline-block;
   padding: 0.75rem 1.5rem;
-  background-color: white;
+  background-color: #0A0F16;
   color: ${({ theme }) => theme.colors.primary.main};
-  border: none;
+  border: 1px solid ${({ theme }) => theme.colors.primary.main};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: 1rem;
   font-weight: 600;
@@ -232,7 +233,9 @@ const CTAButton = styled(Link)`
   
   &:hover {
     transform: translateY(-3px);
-    box-shadow: ${({ theme }) => theme.shadows.md};
+    box-shadow: 0 0 15px ${({ theme }) => theme.colors.primary.main}40;
+    background-color: ${({ theme }) => theme.colors.primary.main};
+    color: #0A0F16;
   }
 `;
 
@@ -245,7 +248,7 @@ const loadScript = (src: string): Promise<void> => {
       resolve();
       return;
     }
-    
+
     const script = document.createElement('script');
     script.src = src;
     script.async = true;
@@ -259,13 +262,13 @@ const HomePage: React.FC = () => {
   const vantaRef = useRef<HTMLDivElement>(null);
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [vantaInitialized, setVantaInitialized] = useState(false);
-  
+
   // Load required scripts
   useEffect(() => {
     const loadRequiredScripts = async () => {
       try {
         console.log('Starting to load scripts for Vanta.js');
-        
+
         // Load THREE.js if not already loaded
         if (!window.THREE) {
           console.log('Loading THREE.js');
@@ -273,7 +276,7 @@ const HomePage: React.FC = () => {
         } else {
           console.log('THREE.js already loaded');
         }
-        
+
         // Load Vanta.js if not already loaded
         if (!window.VANTA) {
           console.log('Loading Vanta.js WAVES effect');
@@ -281,16 +284,16 @@ const HomePage: React.FC = () => {
         } else {
           console.log('Vanta.js already loaded');
         }
-        
+
         console.log('Scripts loaded successfully');
         setScriptsLoaded(true);
       } catch (error) {
         console.error('Failed to load scripts:', error);
       }
     };
-    
+
     loadRequiredScripts();
-    
+
     // Add listener to check when Vanta effect is actually visible
     const checkVantaVisibility = () => {
       const bgElement = document.getElementById('vanta-bg');
@@ -303,25 +306,25 @@ const HomePage: React.FC = () => {
         });
       }
     };
-    
+
     window.addEventListener('load', checkVantaVisibility);
     const timer = setTimeout(checkVantaVisibility, 1500);
-    
+
     return () => {
       window.removeEventListener('load', checkVantaVisibility);
       clearTimeout(timer);
     };
   }, []);
-  
+
   // Initialize Vanta effect once scripts are loaded
   useEffect(() => {
     if (scriptsLoaded && vantaRef.current && window.VANTA && !vantaInitialized) {
       console.log('Preparing to initialize Vanta effect');
-      
+
       // Add delay to ensure DOM is fully rendered
       const timer = setTimeout(() => {
         console.log('Initializing Vanta effect on element:', vantaRef.current);
-        
+
         try {
           const vantaEffect = window.VANTA.WAVES({
             el: vantaRef.current,
@@ -331,15 +334,15 @@ const HomePage: React.FC = () => {
             minHeight: 800.00,
             minWidth: 800.00,
             scale: 1.00,
-            color: '#81C784',
-            shininess: 15,
-            waveHeight: 12,
-            waveSpeed: 0.5,
+            color: '#051210',
+            shininess: 45,
+            waveHeight: 15,
+            waveSpeed: 0.7,
             zoom: 1.0
           });
-          
+
           setVantaInitialized(true);
-          
+
           // Store the effect in a ref to prevent it from being destroyed prematurely
           return () => {
             if (vantaEffect) {
@@ -352,20 +355,20 @@ const HomePage: React.FC = () => {
           console.error('Error initializing Vanta:', error);
         }
       }, 800);
-      
+
       return () => clearTimeout(timer);
     }
   }, [scriptsLoaded, vantaInitialized]);
-  
+
   // Add scroll animation
   const featuresRef = useRef<HTMLElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
-  
+
   // Handle smooth scrolling to sections
   const scrollToFeatures = () => {
     featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   return (
     <PageContainer>
       <HeroSection>
@@ -383,10 +386,10 @@ const HomePage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            Connect with businesses to buy, sell, and exchange recovered materials. 
+            Connect with businesses to buy, sell, and exchange recovered materials.
             Create closed-loop supply chains and reduce waste through our innovative marketplace.
           </HeroSubtitle>
-          
+
           <ButtonContainer
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -395,7 +398,7 @@ const HomePage: React.FC = () => {
             <Button to="/marketplace">Explore Marketplace</Button>
             <OutlineButton to="/register">Create Account</OutlineButton>
           </ButtonContainer>
-          
+
           <StatsContainer
             ref={statsRef}
             initial={{ opacity: 0 }}
@@ -419,18 +422,18 @@ const HomePage: React.FC = () => {
               <StatLabel>Cost Savings</StatLabel>
             </StatItem>
           </StatsContainer>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, y: 0 }}
             animate={{ opacity: 1, y: 10 }}
-            transition={{ 
-              duration: 1.5, 
-              repeat: Infinity, 
-              repeatType: "reverse" 
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              repeatType: "reverse"
             }}
             onClick={scrollToFeatures}
-            style={{ 
-              cursor: 'pointer', 
+            style={{
+              cursor: 'pointer',
               marginTop: '2rem',
               display: 'flex',
               flexDirection: 'column',
@@ -446,7 +449,7 @@ const HomePage: React.FC = () => {
           </motion.div>
         </HeroContent>
       </HeroSection>
-      
+
       <FeaturesSection ref={featuresRef}>
         <SectionTitle>How It Works</SectionTitle>
         <FeaturesGrid>
@@ -464,7 +467,7 @@ const HomePage: React.FC = () => {
               </FeatureDescription>
             </FeatureContent>
           </FeatureCard>
-          
+
           <FeatureCard
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -479,7 +482,7 @@ const HomePage: React.FC = () => {
               </FeatureDescription>
             </FeatureContent>
           </FeatureCard>
-          
+
           <FeatureCard
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -494,7 +497,7 @@ const HomePage: React.FC = () => {
               </FeatureDescription>
             </FeatureContent>
           </FeatureCard>
-          
+
           <FeatureCard
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -509,7 +512,7 @@ const HomePage: React.FC = () => {
               </FeatureDescription>
             </FeatureContent>
           </FeatureCard>
-          
+
           <FeatureCard
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -524,7 +527,7 @@ const HomePage: React.FC = () => {
               </FeatureDescription>
             </FeatureContent>
           </FeatureCard>
-          
+
           <FeatureCard
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -541,11 +544,11 @@ const HomePage: React.FC = () => {
           </FeatureCard>
         </FeaturesGrid>
       </FeaturesSection>
-      
+
       <CTASection>
         <CTATitle>Ready to Join the Circular Economy?</CTATitle>
         <CTADescription>
-          Register today and start connecting with businesses committed to 
+          Register today and start connecting with businesses committed to
           sustainability and resource efficiency.
         </CTADescription>
         <CTAButton to="/register">Create Your Account</CTAButton>

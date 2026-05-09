@@ -3,31 +3,31 @@ import { DefaultTheme } from 'styled-components';
 export const theme: DefaultTheme = {
   colors: {
     primary: {
-      main: '#4CAF50', // Green - representing sustainability
-      light: '#81C784',
-      dark: '#2E7D32',
+      main: '#00FFA3', // Neon Cyber Green
+      light: '#66FFC2',
+      dark: '#00B372',
     },
     secondary: {
-      main: '#2196F3', // Blue - representing innovation
-      light: '#64B5F6',
-      dark: '#1565C0',
+      main: '#00F0FF', // Neon Cyan
+      light: '#66F6FF',
+      dark: '#00A8B3',
     },
     text: {
-      primary: '#333333',
-      secondary: '#757575',
-      disabled: '#9E9E9E',
+      primary: '#FFFFFF',
+      secondary: '#A0AEC0',
+      disabled: '#4A5568',
     },
     background: {
-      default: '#FFFFFF',
-      paper: '#F5F5F5',
+      default: '#0A0F16', // Deep charcoal/blue-black
+      paper: '#131C28', // Slightly lighter for cards/surfaces
     },
-    error: '#F44336',
-    success: '#4CAF50',
-    warning: '#FFC107',
-    info: '#2196F3',
-    disabled: '#9E9E9E',
+    error: '#FF3366', // Neon Red/Pink
+    success: '#00FFA3',
+    warning: '#FFD700', // Neon Yellow
+    info: '#00F0FF',
+    disabled: '#4A5568',
     white: '#FFFFFF',
-    border: '#E0E0E0',
+    border: '#2D3748', // Dark border
   },
   spacing: (multiplier = 1) => `${8 * multiplier}px`,
   breakpoints: {
@@ -38,13 +38,13 @@ export const theme: DefaultTheme = {
     xl: '1200px',
   },
   shadows: {
-    sm: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
-    md: '0 3px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12)',
-    lg: '0 10px 20px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10)',
-    xl: '0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22)',
+    sm: '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)',
+    md: '0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3)',
+    lg: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3)',
+    xl: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
   },
   typography: {
-    fontFamily: '"Poppins", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily: '"Outfit", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontWeights: {
       light: 300,
       regular: 400,

@@ -4,60 +4,60 @@ import { createGlobalStyle } from 'styled-components';
 export const colors = {
   // Primary colors
   primary: {
-    main: '#2E7D32', // Green for sustainability
-    light: '#60ad5e',
-    dark: '#005005',
-    contrastText: '#FFFFFF'
+    main: '#00FFA3', // Neon Cyber Green
+    light: '#66FFC2',
+    dark: '#00B372',
+    contrastText: '#0A0F16'
   },
   // Secondary colors
   secondary: {
-    main: '#00796B', // Teal for circular economy
-    light: '#48a999',
-    dark: '#004c40',
-    contrastText: '#FFFFFF'
+    main: '#00F0FF', // Neon Cyan
+    light: '#66F6FF',
+    dark: '#00A8B3',
+    contrastText: '#0A0F16'
   },
   // Accent color
   accent: {
-    main: '#FFC107', // Amber for highlights
-    light: '#fff350',
-    dark: '#c79100',
-    contrastText: '#000000'
+    main: '#FFD700', // Neon Yellow
+    light: '#FFEA70',
+    dark: '#B29600',
+    contrastText: '#0A0F16'
   },
   // Neutral colors
   neutral: {
     white: '#FFFFFF',
-    light: '#F5F5F5',
-    medium: '#E0E0E0',
-    grey: '#9E9E9E',
-    darkGrey: '#616161',
-    dark: '#212121',
+    light: '#2D3748',
+    medium: '#4A5568',
+    grey: '#A0AEC0',
+    darkGrey: '#CBD5E0',
+    dark: '#F7FAFC',
     black: '#000000'
   },
   // Feedback colors
   feedback: {
-    success: '#4CAF50',
-    info: '#2196F3',
-    warning: '#FF9800',
-    error: '#F44336'
+    success: '#00FFA3',
+    info: '#00F0FF',
+    warning: '#FFD700',
+    error: '#FF3366'
   },
   // Background colors
   background: {
-    default: '#FAFAFA',
-    paper: '#FFFFFF',
-    dark: '#F5F5F5'
+    default: '#0A0F16', // Deep charcoal
+    paper: '#131C28', // Slightly lighter
+    dark: '#05080C'
   },
   // Text colors
   text: {
-    primary: '#212121',
-    secondary: '#757575',
-    disabled: '#9E9E9E',
-    hint: '#9E9E9E'
+    primary: '#FFFFFF',
+    secondary: '#A0AEC0',
+    disabled: '#4A5568',
+    hint: '#4A5568'
   },
   // Border colors
   border: {
-    light: '#E0E0E0',
-    main: '#BDBDBD',
-    dark: '#9E9E9E'
+    light: '#2D3748',
+    main: '#1A2433',
+    dark: '#0A0F16'
   }
 };
 

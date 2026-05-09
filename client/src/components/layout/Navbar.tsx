@@ -89,7 +89,7 @@ const NavLinks = styled.div`
   margin-right: ${theme.spacing.lg};
 `;
 
-const NavLink = styled(Link)<{ $isActive: boolean }>`
+const NavLink = styled(Link) <{ $isActive: boolean }>`
   color: ${props => props.$isActive ? theme.colors.primary.main : theme.colors.text.primary};
   padding: ${theme.spacing.sm} ${theme.spacing.md};
   position: relative;
@@ -200,7 +200,7 @@ const MobileMenu = styled(motion.div)`
   }
 `;
 
-const MobileNavLink = styled(Link)<{ $isActive: boolean }>`
+const MobileNavLink = styled(Link) <{ $isActive: boolean }>`
   display: block;
   color: ${props => props.$isActive ? theme.colors.primary.main : theme.colors.text.primary};
   padding: ${theme.spacing.md};
@@ -255,17 +255,17 @@ const Navbar: React.FC<NavbarProps> = ({
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
+
   // Get the first letter of the username for the avatar
   const userInitial = userName ? userName.charAt(0).toUpperCase() : '';
-  
+
   // Get role-specific links
   const getRoleLinks = () => {
     if (userRole === 'admin') return adminLinks;
     if (userRole === 'transporter') return transporterLinks;
     return companyLinks;
   };
-  
+
   // Listen for scroll events
   useEffect(() => {
     const handleScroll = () => {
@@ -275,18 +275,18 @@ const Navbar: React.FC<NavbarProps> = ({
         setScrolled(false);
       }
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
-  
+
   // Close mobile menu when location changes
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
-  
+
   return (
     <>
       <NavbarContainer
@@ -295,7 +295,8 @@ const Navbar: React.FC<NavbarProps> = ({
         transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
           height: scrolled ? '60px' : '70px',
-          backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.97)' : theme.colors.background.paper
+          backgroundColor: scrolled ? 'rgba(0, 0, 0, 0.95)' : '#000000',
+          borderBottom: '1px solid #131C28'
         }}
       >
         <Logo to="/">
@@ -305,7 +306,7 @@ const Navbar: React.FC<NavbarProps> = ({
             <small>Materials Marketplace</small>
           </span>
         </Logo>
-        
+
         <Nav>
           <NavLinks>
             {navLinks.map(link => (
@@ -317,7 +318,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 {link.label}
               </NavLink>
             ))}
-            
+
             {isLoggedIn && getRoleLinks().map(link => (
               <NavLink
                 key={link.to}
@@ -328,16 +329,16 @@ const Navbar: React.FC<NavbarProps> = ({
               </NavLink>
             ))}
           </NavLinks>
-          
+
           {isLoggedIn ? (
             <UserSection>
               <UserAvatar $image={userAvatar}>
                 {!userAvatar && userInitial}
               </UserAvatar>
               <UserName>{userName}</UserName>
-              <Button 
-                size="small" 
-                variant="outlined" 
+              <Button
+                size="small"
+                variant="outlined"
                 onClick={onLogout}
               >
                 Logout
@@ -345,19 +346,19 @@ const Navbar: React.FC<NavbarProps> = ({
             </UserSection>
           ) : (
             <div>
-              <Button 
-                size="small" 
-                variant="text" 
-                as={Link} 
-                to="/login" 
+              <Button
+                size="small"
+                variant="text"
+                as={Link}
+                to="/login"
                 style={{ marginRight: theme.spacing.sm }}
               >
                 Login
               </Button>
-              <Button 
-                size="small" 
-                variant="primary" 
-                as={Link} 
+              <Button
+                size="small"
+                variant="primary"
+                as={Link}
                 to="/register"
               >
                 Register
@@ -365,12 +366,12 @@ const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
         </Nav>
-        
+
         <MenuButton onClick={() => setIsMenuOpen(!isMenuOpen)}>
           <HamburgerIcon $isOpen={isMenuOpen} />
         </MenuButton>
       </NavbarContainer>
-      
+
       <AnimatePresence>
         {isMenuOpen && (
           <MobileMenu
@@ -387,7 +388,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 <UserName>{userName}</UserName>
               </MobileUserSection>
             )}
-            
+
             {navLinks.map(link => (
               <MobileNavLink
                 key={link.to}
@@ -397,7 +398,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 {link.label}
               </MobileNavLink>
             ))}
-            
+
             {isLoggedIn && getRoleLinks().map(link => (
               <MobileNavLink
                 key={link.to}
@@ -407,32 +408,32 @@ const Navbar: React.FC<NavbarProps> = ({
                 {link.label}
               </MobileNavLink>
             ))}
-            
+
             {isLoggedIn ? (
-              <Button 
-                variant="outlined" 
-                fullWidth 
-                onClick={onLogout} 
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={onLogout}
                 style={{ marginTop: theme.spacing.md }}
               >
                 Logout
               </Button>
             ) : (
               <>
-                <Button 
-                  as={Link} 
-                  to="/login" 
-                  variant="outlined" 
-                  fullWidth 
+                <Button
+                  as={Link}
+                  to="/login"
+                  variant="outlined"
+                  fullWidth
                   style={{ marginTop: theme.spacing.md }}
                 >
                   Login
                 </Button>
-                <Button 
-                  as={Link} 
-                  to="/register" 
-                  variant="primary" 
-                  fullWidth 
+                <Button
+                  as={Link}
+                  to="/register"
+                  variant="primary"
+                  fullWidth
                   style={{ marginTop: theme.spacing.sm }}
                 >
                   Register

@@ -78,7 +78,7 @@ const ChainCard = styled(motion.div)`
 const ChainHeader = styled.div`
   background-color: ${({ theme }) => theme.colors.primary.main};
   padding: 1.5rem;
-  color: white;
+  color: ${({ theme }) => theme.colors.primary.contrastText};
 `;
 
 const ChainName = styled.h2`
@@ -180,12 +180,12 @@ const NodeIcon = styled.div`
   width: 60px;
   height: 60px;
   border-radius: ${({ theme }) => theme.borderRadius.circle};
-  background-color: ${({ theme }) => theme.colors.primary.light};
+  background-color: ${({ theme }) => theme.colors.primary.main};
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 0.5rem;
-  color: white;
+  color: ${({ theme }) => theme.colors.primary.contrastText};
   font-size: 1.5rem;
   font-weight: bold;
 `;
@@ -221,7 +221,7 @@ const ButtonsContainer = styled.div`
 const Button = styled.button`
   padding: 0.75rem 1.5rem;
   background-color: ${({ theme }) => theme.colors.primary.main};
-  color: white;
+  color: ${({ theme }) => theme.colors.primary.contrastText};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-weight: ${({ theme }) => theme.typography.fontWeights.medium};
@@ -230,7 +230,7 @@ const Button = styled.button`
   transition: background-color 0.2s ease;
   
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primary.dark};
+    background-color: ${({ theme }) => theme.colors.primary.light};
   }
 `;
 

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import styled, { keyframes } from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { evaluateListing, ListingEvaluation } from '../services/aiService';
 
 // Mock categories - would be fetched from API in production
 const materialCategories = [
@@ -183,6 +184,246 @@ const ErrorMessage = styled.div`
   margin-top: 0.5rem;
 `;
 
+// AI Evaluation Styles
+const glowPulse = keyframes`
+  0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 163, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(0, 255, 163, 0.6); }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`;
+
+const AIButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #00FFA3, #00F0FF);
+  color: #0A0F16;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: ${glowPulse} 2s ease-in-out infinite;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(0, 255, 163, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    animation: none;
+  }
+`;
+
+const AILoadingBar = styled.div`
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #00FFA3, #00F0FF, transparent);
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.5s linear infinite;
+  border-radius: 2px;
+  margin: 1rem 0;
+`;
+
+const AIResultsPanel = styled(motion.div)`
+  background: linear-gradient(135deg, #0D1117 0%, #131C28 100%);
+  border: 1px solid #1E2D3D;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 0 30px rgba(0, 255, 163, 0.1);
+`;
+
+const AIResultsHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #1E2D3D;
+`;
+
+const AIIcon = styled.span`
+  font-size: 28px;
+`;
+
+const AIResultsTitle = styled.h3`
+  font-size: 1.3rem;
+  color: #00FFA3;
+  margin: 0;
+`;
+
+const ScoreContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #0A0F16;
+  border-radius: 12px;
+  border: 1px solid #1E2D3D;
+`;
+
+const ScoreCircle = styled.div<{ $score: number }>`
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0A0F16;
+  background: ${({ $score }) => 
+    $score >= 8 ? 'linear-gradient(135deg, #00FFA3, #00C882)' :
+    $score >= 5 ? 'linear-gradient(135deg, #FFD700, #FFA000)' :
+    'linear-gradient(135deg, #FF3366, #FF1744)'};
+  flex-shrink: 0;
+  box-shadow: ${({ $score }) => 
+    $score >= 8 ? '0 0 20px rgba(0, 255, 163, 0.4)' :
+    $score >= 5 ? '0 0 20px rgba(255, 215, 0, 0.4)' :
+    '0 0 20px rgba(255, 51, 102, 0.4)'};
+`;
+
+const ScoreDetails = styled.div`
+  flex: 1;
+`;
+
+const ScoreLabel = styled.div`
+  font-size: 0.85rem;
+  color: #A0AEC0;
+  margin-bottom: 4px;
+`;
+
+const ScoreValue = styled.div`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #FFFFFF;
+`;
+
+const ResultSection = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const ResultSectionTitle = styled.h4`
+  font-size: 1rem;
+  color: #00F0FF;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const SuggestionList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const SuggestionItem = styled.li`
+  padding: 10px 14px;
+  background: #0A0F16;
+  border-radius: 8px;
+  border-left: 3px solid #00FFA3;
+  color: #E2E8F0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+`;
+
+const BuyerCard = styled.div`
+  padding: 14px;
+  background: #0A0F16;
+  border-radius: 12px;
+  border: 1px solid #1E2D3D;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #00FFA3;
+    box-shadow: 0 0 12px rgba(0, 255, 163, 0.15);
+  }
+`;
+
+const BuyerName = styled.div`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+`;
+
+const BuyerIndustry = styled.span`
+  display: inline-block;
+  padding: 2px 10px;
+  background: rgba(0, 240, 255, 0.15);
+  color: #00F0FF;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+`;
+
+const BuyerReason = styled.div`
+  font-size: 0.85rem;
+  color: #A0AEC0;
+  line-height: 1.4;
+`;
+
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const InfoCard = styled.div`
+  padding: 14px;
+  background: #0A0F16;
+  border-radius: 10px;
+  border: 1px solid #1E2D3D;
+`;
+
+const InfoLabel = styled.div`
+  font-size: 0.75rem;
+  color: #A0AEC0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+`;
+
+const InfoValue = styled.div`
+  font-size: 0.95rem;
+  color: #FFFFFF;
+  line-height: 1.4;
+`;
+
+const DemandBadge = styled.span<{ $level: string }>`
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: ${({ $level }) =>
+    $level === 'Very High' || $level === 'High' ? 'rgba(0, 255, 163, 0.15)' :
+    $level === 'Medium' ? 'rgba(255, 215, 0, 0.15)' :
+    'rgba(255, 51, 102, 0.15)'};
+  color: ${({ $level }) =>
+    $level === 'Very High' || $level === 'High' ? '#00FFA3' :
+    $level === 'Medium' ? '#FFD700' :
+    '#FF3366'};
+`;
+
 const CreateListingPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
@@ -209,8 +450,13 @@ const CreateListingPage: React.FC = () => {
     location: '',
     images: [] as File[],
     certification: '',
-    availabilityDate: ''
+    availabilityDate: '',
+    condition: 'clean',
+    contaminationLevel: 'low',
+    verificationLevel: 'self-declared'
   });
+  const [aiResult, setAiResult] = useState<ListingEvaluation | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   
   // Handle category change
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -255,13 +501,20 @@ const CreateListingPage: React.FC = () => {
     setError('');
     
     try {
+      // Generate a Material Passport ID
+      const passportId = `MPID-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+
       // Create a new listing object
       const newListing = {
         id: Date.now(), // Use timestamp as unique ID
+        passportId,
         title: formData.title,
         description: formData.description,
         category: formData.category,
         subcategory: formData.subcategory,
+        condition: formData.condition,
+        contaminationLevel: formData.contaminationLevel,
+        verificationLevel: formData.verificationLevel,
         quantity: `${formData.quantity} ${formData.unit}`,
         price: `€${formData.price} ${formData.priceUnit}`,
         location: formData.location,
@@ -493,6 +746,60 @@ const CreateListingPage: React.FC = () => {
                   placeholder="E.g., ISO 14001, GRS, Cradle to Cradle"
                 />
               </FormGroup>
+
+            </FormRow>
+          </FormSection>
+          
+          <FormSection>
+            <SectionTitle>Condition & Verification</SectionTitle>
+            <FormRow>
+              <FormGroup>
+                <FormLabel htmlFor="condition">Material Condition*</FormLabel>
+                <FormSelect
+                  id="condition"
+                  name="condition"
+                  value={formData.condition}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="clean">Clean / Processed</option>
+                  <option value="mixed">Mixed / Unsorted</option>
+                  <option value="baled">Baled / Compressed</option>
+                  <option value="raw">Raw / Unprocessed</option>
+                </FormSelect>
+              </FormGroup>
+              <FormGroup>
+                <FormLabel htmlFor="contaminationLevel">Contamination Level*</FormLabel>
+                <FormSelect
+                  id="contaminationLevel"
+                  name="contaminationLevel"
+                  value={formData.contaminationLevel}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="none">None (0%)</option>
+                  <option value="low">Low (&lt; 5%)</option>
+                  <option value="medium">Medium (5-15%)</option>
+                  <option value="high">High (&gt; 15%)</option>
+                </FormSelect>
+              </FormGroup>
+            </FormRow>
+            <FormRow>
+              <FormGroup>
+                <FormLabel htmlFor="verificationLevel">Initial Verification Level*</FormLabel>
+                <FormSelect
+                  id="verificationLevel"
+                  name="verificationLevel"
+                  value={formData.verificationLevel}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="self-declared">Self-declared</option>
+                  <option value="photo-verified">Photo verified</option>
+                  <option value="document-verified">Document verified</option>
+                </FormSelect>
+                <FormHint>Higher verification levels attract more buyers. You can upgrade this later via Third-party verification.</FormHint>
+              </FormGroup>
             </FormRow>
           </FormSection>
           
@@ -503,10 +810,100 @@ const CreateListingPage: React.FC = () => {
           <FormSection>
             <ButtonsContainer>
               <BackButton to="/my-listings">Cancel</BackButton>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Listing'}
-              </Button>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <AIButton
+                  type="button"
+                  onClick={async () => {
+                    if (!formData.title || !formData.category) {
+                      setError('Please fill in at least a title and category before evaluating.');
+                      return;
+                    }
+                    setIsEvaluating(true);
+                    setError('');
+                    setAiResult(null);
+                    try {
+                      const result = await evaluateListing(formData);
+                      setAiResult(result);
+                    } catch (err) {
+                      setError('AI evaluation failed. Please try again.');
+                    } finally {
+                      setIsEvaluating(false);
+                    }
+                  }}
+                  disabled={isEvaluating}
+                >
+                  🤖 {isEvaluating ? 'Analyzing...' : 'Evaluate with AI'}
+                </AIButton>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create Listing'}
+                </Button>
+              </div>
             </ButtonsContainer>
+
+            {isEvaluating && <AILoadingBar />}
+
+            <AnimatePresence>
+              {aiResult && (
+                <AIResultsPanel
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <AIResultsHeader>
+                    <AIIcon>🧠</AIIcon>
+                    <AIResultsTitle>ReValue AI Analysis</AIResultsTitle>
+                  </AIResultsHeader>
+
+                  <ScoreContainer>
+                    <ScoreCircle $score={aiResult.score}>{aiResult.score}/10</ScoreCircle>
+                    <ScoreDetails>
+                      <ScoreLabel>Expected Market Price</ScoreLabel>
+                      <ScoreValue>{aiResult.expectedPrice}</ScoreValue>
+                      <div style={{ marginTop: '8px' }}>
+                        <ScoreLabel>Demand Level</ScoreLabel>
+                        <DemandBadge $level={aiResult.demandLevel}>{aiResult.demandLevel}</DemandBadge>
+                      </div>
+                    </ScoreDetails>
+                  </ScoreContainer>
+
+                  <InfoGrid>
+                    <InfoCard>
+                      <InfoLabel>⚠️ Safety</InfoLabel>
+                      <InfoValue>{aiResult.safetyCheck}</InfoValue>
+                    </InfoCard>
+                    <InfoCard>
+                      <InfoLabel>📋 Legal / Regulatory</InfoLabel>
+                      <InfoValue>{aiResult.legalCheck}</InfoValue>
+                    </InfoCard>
+                    <InfoCard style={{ gridColumn: '1 / -1' }}>
+                      <InfoLabel>🚚 Logistics Feasibility</InfoLabel>
+                      <InfoValue>{aiResult.feasibilityNotes}</InfoValue>
+                    </InfoCard>
+                  </InfoGrid>
+
+                  <ResultSection>
+                    <ResultSectionTitle>💡 Suggestions to Improve</ResultSectionTitle>
+                    <SuggestionList>
+                      {aiResult.suggestions.map((s, i) => (
+                        <SuggestionItem key={i}>{s}</SuggestionItem>
+                      ))}
+                    </SuggestionList>
+                  </ResultSection>
+
+                  <ResultSection>
+                    <ResultSectionTitle>🏢 Potential Buyer Companies</ResultSectionTitle>
+                    {aiResult.potentialBuyers.map((buyer, i) => (
+                      <BuyerCard key={i}>
+                        <BuyerName>{buyer.name}</BuyerName>
+                        <BuyerIndustry>{buyer.industry}</BuyerIndustry>
+                        <BuyerReason>{buyer.reason}</BuyerReason>
+                      </BuyerCard>
+                    ))}
+                  </ResultSection>
+                </AIResultsPanel>
+              )}
+            </AnimatePresence>
           </FormSection>
         </form>
       </FormContainer>

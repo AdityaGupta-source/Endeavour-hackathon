@@ -98,24 +98,54 @@ const FilterLabel = styled.span`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-const CategoryButton = styled.button<{ isActive: boolean }>`
-  padding: 0.5rem 1rem;
-  border: none;
+const CategoryDropdownContainer = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const DropdownButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  background-color: ${({ theme }) => theme.colors.background.paper};
+  color: ${({ theme }) => theme.colors.text.primary};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  background-color: ${({ isActive, theme }) =>
-    isActive ? theme.colors.primary.main : theme.colors.background.paper};
-  color: ${({ isActive, theme }) =>
-    isActive ? theme.colors.white : theme.colors.text.primary};
-  font-weight: ${({ isActive, theme }) =>
-    isActive ? theme.typography.fontWeights.medium : theme.typography.fontWeights.regular};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.medium};
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   transition: all 0.2s ease;
-  box-shadow: ${({ theme }) => theme.shadows.sm};
   
   &:hover {
-    background-color: ${({ isActive, theme }) =>
-    isActive ? theme.colors.primary.dark : theme.colors.primary.light};
-    color: ${({ theme }) => theme.colors.white};
+    border-color: ${({ theme }) => theme.colors.primary.main};
+    box-shadow: 0 0 10px ${({ theme }) => theme.colors.primary.main}40;
+  }
+`;
+
+const DropdownMenu = styled(motion.div)`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.5rem;
+  background-color: ${({ theme }) => theme.colors.background.paper};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  z-index: 10;
+  min-width: 200px;
+  overflow: hidden;
+`;
+
+const DropdownItem = styled.div<{ isActive: boolean }>`
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  color: ${({ isActive, theme }) => isActive ? theme.colors.primary.main : theme.colors.text.primary};
+  background-color: ${({ isActive, theme }) => isActive ? `${theme.colors.primary.main}15` : 'transparent'};
+  transition: background-color 0.2s ease;
+  font-weight: ${({ isActive, theme }) => isActive ? theme.typography.fontWeights.medium : theme.typography.fontWeights.regular};
+  
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.background.default};
   }
 `;
 
@@ -238,6 +268,7 @@ const NoResults = styled.div`
 
 const MarketplacePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMaterials, setFilteredMaterials] = useState(mockMaterials);
   const [imageErrors, setImageErrors] = useState<{ [key: number]: boolean }>({});
@@ -283,27 +314,43 @@ const MarketplacePage: React.FC = () => {
         <Title>Marketplace</Title>
       </Header>
 
-      <FilterSection>
-        <FilterLabel>Categories:</FilterLabel>
-        {categories.map(category => (
-          <CategoryButton
-            key={category}
-            isActive={selectedCategory === category}
-            onClick={() => setSelectedCategory(category)}
-          >
-            {category}
-          </CategoryButton>
-        ))}
-      </FilterSection>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        <CategoryDropdownContainer>
+          <DropdownButton onClick={() => setIsCategoryOpen(!isCategoryOpen)}>
+            Category: {selectedCategory}
+            <span style={{ fontSize: '0.8rem', marginLeft: '8px' }}>▼</span>
+          </DropdownButton>
+          
+          {isCategoryOpen && (
+            <DropdownMenu
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {categories.map(category => (
+                <DropdownItem
+                  key={category}
+                  isActive={selectedCategory === category}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    setIsCategoryOpen(false);
+                  }}
+                >
+                  {category}
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          )}
+        </CategoryDropdownContainer>
 
-      <FilterSection>
         <SearchInput
           type="text"
           placeholder="Search materials..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-      </FilterSection>
+      </div>
 
       <MaterialsGrid>
         {filteredMaterials.length > 0 ? (

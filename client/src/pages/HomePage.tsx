@@ -379,15 +379,14 @@ const HomePage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            Building a Sustainable Future through Circular Economy
+            ReValue AI
           </HeroTitle>
           <HeroSubtitle
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            Connect with businesses to buy, sell, and exchange recovered materials.
-            Create closed-loop supply chains and reduce waste through our innovative marketplace.
+            Not every waste stream should be reused blindly. ReValue AI checks if it is safe, legal, profitable, logistically feasible, and actually demanded.
           </HeroSubtitle>
 
           <ButtonContainer

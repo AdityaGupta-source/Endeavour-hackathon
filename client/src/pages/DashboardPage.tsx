@@ -3,6 +3,24 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+const revenueData = [
+  { name: 'Jan', revenue: 4000 },
+  { name: 'Feb', revenue: 3000 },
+  { name: 'Mar', revenue: 2000 },
+  { name: 'Apr', revenue: 2780 },
+  { name: 'May', revenue: 5890 },
+  { name: 'Jun', revenue: 7390 },
+];
+
+const wasteData = [
+  { name: 'Plastics', value: 400 },
+  { name: 'Metals', value: 300 },
+  { name: 'Paper', value: 300 },
+  { name: 'Textiles', value: 200 },
+];
+const COLORS = ['#00FFA3', '#00F0FF', '#FFD700', '#FF3366'];
 
 // Mock data - Replace with API calls in production
 const mockStats = {
@@ -374,7 +392,7 @@ const DashboardPage: React.FC = () => {
         <div>
           <Title>Dashboard</Title>
           <WelcomeMessage>
-            Welcome back, {user?.name || 'User'}!
+            Welcome back, {user?.name || 'User'}! You are logged in as a <span style={{ color: '#00FFA3', textTransform: 'capitalize' }}>{user?.role || 'Seller'}</span>.
           </WelcomeMessage>
         </div>
         <ActionButtons>
@@ -420,6 +438,58 @@ const DashboardPage: React.FC = () => {
                   <StatValue>{mockStats.revenues}</StatValue>
                 </StatCard>
               </StatsGrid>
+            </CardContent>
+          </Card>
+          
+          <Card
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+          >
+            <CardHeader>
+              <CardTitle>Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: '#A0AEC0' }}>Revenue Trend</h3>
+                  <div style={{ height: '300px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={revenueData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
+                        <XAxis dataKey="name" stroke="#A0AEC0" />
+                        <YAxis stroke="#A0AEC0" />
+                        <Tooltip contentStyle={{ backgroundColor: '#131C28', border: '1px solid #2D3748', color: '#FFF' }} />
+                        <Bar dataKey="revenue" fill="#00FFA3" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                <div>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: '#A0AEC0' }}>Waste by Category</h3>
+                  <div style={{ height: '300px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={wasteData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {wasteData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ backgroundColor: '#131C28', border: '1px solid #2D3748', color: '#FFF' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
           

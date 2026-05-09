@@ -295,6 +295,125 @@ const CertificationBadge = styled.span`
   color: ${({ theme }) => theme.colors.success};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: 0.75rem;
+  font-size: 0.75rem;
+}
+
+const AiRecommendationsSection = styled.div`
+  margin-top: 2rem;
+  background: linear-gradient(145deg, ${({ theme }) => theme.colors.background.paper}, #1a2636);
+  padding: 1.5rem;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.1);
+  border: 1px solid ${({ theme }) => theme.colors.secondary.dark};
+`;
+
+const AiHeader = styled.h3`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: ${({ theme }) => theme.colors.secondary.main};
+`;
+
+const ComplianceAlert = styled.div<{ $level: 'warning' | 'danger' }>`
+  background-color: ${({ $level, theme }) => $level === 'danger' ? theme.colors.error + '20' : theme.colors.warning + '20'};
+  color: ${({ $level, theme }) => $level === 'danger' ? theme.colors.error : theme.colors.warning};
+  padding: 1rem;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border-left: 4px solid ${({ $level, theme }) => $level === 'danger' ? theme.colors.error : theme.colors.warning};
+  margin-bottom: 1.5rem;
+  font-weight: ${({ theme }) => theme.typography.fontWeights.medium};
+`;
+
+const PathwayGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
+const PathwayCard = styled.div<{ $feasibility: 'High' | 'Medium' | 'Experimental' | 'Not Recommended' }>`
+  background-color: ${({ theme }) => theme.colors.background.default};
+  padding: 1rem;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border-left: 4px solid ${({ $feasibility, theme }) => {
+    switch($feasibility) {
+      case 'High': return theme.colors.success;
+      case 'Medium': return theme.colors.warning;
+      case 'Experimental': return theme.colors.info;
+      case 'Not Recommended': return theme.colors.error;
+      default: return theme.colors.border;
+    }
+  }};
+`;
+
+const PathwayTitle = styled.h4`
+  margin-bottom: 0.5rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const PathwayFeasibility = styled.span<{ $feasibility: 'High' | 'Medium' | 'Experimental' | 'Not Recommended' }>`
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  background-color: ${({ $feasibility, theme }) => {
+    switch($feasibility) {
+      case 'High': return theme.colors.success + '30';
+      case 'Medium': return theme.colors.warning + '30';
+      case 'Experimental': return theme.colors.info + '30';
+      case 'Not Recommended': return theme.colors.error + '30';
+      default: return theme.colors.border;
+    }
+  }};
+  color: ${({ $feasibility, theme }) => {
+    switch($feasibility) {
+      case 'High': return theme.colors.success;
+      case 'Medium': return theme.colors.warning;
+      case 'Experimental': return theme.colors.info;
+      case 'Not Recommended': return theme.colors.error;
+      default: return theme.colors.text.primary;
+    }
+  }};
+`;
+
+const LogisticsSection = styled.div`
+  margin-top: 2rem;
+  background-color: ${({ theme }) => theme.colors.background.paper};
+  padding: 1.5rem;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+`;
+
+const LogisticsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+`;
+
+const StatBox = styled.div`
+  padding: 1rem;
+  background-color: ${({ theme }) => theme.colors.background.default};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  text-align: center;
+`;
+
+const StatLabel = styled.div`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: 0.25rem;
+`;
+
+const StatValue = styled.div<{ $highlight?: boolean }>`
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: ${({ $highlight, theme }) => $highlight ? theme.colors.success : theme.colors.text.primary};
 `;
 
 const MaterialDetailPage: React.FC = () => {
@@ -358,6 +477,18 @@ const MaterialDetailPage: React.FC = () => {
     }
     return material.image;
   };
+  
+  const mockComplianceWarnings = [
+    { id: 1, level: 'danger' as const, message: '⚠️ Compliance Alert: Unsafe for food packaging due to post-consumer chemical exposure.' },
+    { id: 2, level: 'warning' as const, message: '⚠️ Regulatory Note: Requires additional decontamination step for children\'s products.' }
+  ];
+
+  const mockPathways = [
+    { id: 1, name: 'Non-food Storage', feasibility: 'High' as const, description: 'Excellent structural integrity suitable for robust storage.' },
+    { id: 2, name: 'Construction Piping', feasibility: 'Medium' as const, description: 'Requires blending with virgin material for optimal pressure rating.' },
+    { id: 3, name: '3D Print Filament', feasibility: 'Experimental' as const, description: 'Currently testing melt-flow consistency for consumer 3D printers.' },
+    { id: 4, name: 'Food Grade Packaging', feasibility: 'Not Recommended' as const, description: 'Fails safety standards for direct food contact.' },
+  ];
   
   return (
     <PageContainer>
@@ -446,6 +577,51 @@ const MaterialDetailPage: React.FC = () => {
             </SustainabilityCard>
           </SustainabilityGrid>
         </SustainabilitySection>
+
+        <AiRecommendationsSection>
+          <AiHeader>🧠 ReValue AI Recommendations</AiHeader>
+          
+          {mockComplianceWarnings.map(warning => (
+            <ComplianceAlert key={warning.id} $level={warning.level}>
+              {warning.message}
+            </ComplianceAlert>
+          ))}
+          
+          <SectionTitle style={{ borderBottom: 'none' }}>Suggested Reuse Pathways</SectionTitle>
+          <PathwayGrid>
+            {mockPathways.map(pathway => (
+              <PathwayCard key={pathway.id} $feasibility={pathway.feasibility}>
+                <PathwayTitle>
+                  {pathway.name}
+                  <PathwayFeasibility $feasibility={pathway.feasibility}>
+                    {pathway.feasibility}
+                  </PathwayFeasibility>
+                </PathwayTitle>
+                <p style={{ fontSize: '0.875rem', color: '#A0AEC0' }}>{pathway.description}</p>
+              </PathwayCard>
+            ))}
+          </PathwayGrid>
+        </AiRecommendationsSection>
+
+        <LogisticsSection>
+          <SectionTitle>🚛 Logistics Feasibility Calculator</SectionTitle>
+          <p style={{ fontSize: '0.875rem', color: '#A0AEC0' }}>Based on your location and material quantity (Mock Calculation)</p>
+          <LogisticsGrid>
+            <StatBox>
+              <StatLabel>Estimated Transport Cost</StatLabel>
+              <StatValue>$150.00</StatValue>
+            </StatBox>
+            <StatBox>
+              <StatLabel>Material Value ({material.quantity})</StatLabel>
+              <StatValue>$600.00</StatValue>
+            </StatBox>
+            <StatBox style={{ gridColumn: '1 / -1', background: 'rgba(0, 255, 163, 0.1)' }}>
+              <StatLabel>Expected Net Value</StatLabel>
+              <StatValue $highlight>$450.00</StatValue>
+            </StatBox>
+          </LogisticsGrid>
+        </LogisticsSection>
+        
         
         <SellerSection>
           <SellerHeader>

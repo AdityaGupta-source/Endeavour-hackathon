@@ -5,6 +5,7 @@ import GlobalStyles from './styles/GlobalStyles';
 import { theme } from './theme/theme';
 import Layout from './components/layout/Layout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import AIChatbot from './components/common/AIChatbot';
 
 // Basic pages (eagerly loaded)
 import HomePage from './pages/HomePage';
@@ -26,6 +27,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const TransactionsPage = lazy(() => import('./pages/TransactionsPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const DemandsPage = lazy(() => import('./pages/DemandsPage'));
 
 // Resource Pages (lazily loaded)
 const BlogPage = lazy(() => import('./pages/resources/BlogPage'));
@@ -85,6 +87,11 @@ function AppRoutes() {
             <Route path="about" element={<AboutPage />} />
             <Route path="marketplace" element={<MarketplacePage />} />
             <Route path="marketplace/:id" element={<MaterialDetailPage />} />
+            <Route path="demands" element={
+              <ProtectedRoute>
+                <DemandsPage />
+              </ProtectedRoute>
+            } />
             <Route path="supply-chains" element={<SupplyChainsPage />} />
             <Route path="supply-chains/:id" element={<SupplyChainDetailPage />} />
             
@@ -171,6 +178,7 @@ function App() {
       <GlobalStyles />
       <AuthProvider>
         <AppRoutes />
+        <AIChatbot />
       </AuthProvider>
     </ThemeProvider>
   );

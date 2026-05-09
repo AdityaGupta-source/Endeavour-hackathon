@@ -85,7 +85,7 @@ const TransactionsPageContent: React.FC = () => {
         type: 'sale' as TransactionType,
         date: new Date(2023, 10, 10),
         amount: 1800,
-        status: 'pending' as TransactionStatus,
+        status: 'request' as TransactionStatus,
         counterpartyName: 'GreenManufacturing Co.',
         counterpartyId: 'green-001',
         material: 'Reclaimed Aluminum',
@@ -115,15 +115,15 @@ const TransactionsPageContent: React.FC = () => {
         type: 'sale' as TransactionType,
         date: new Date(2023, 9, 15),
         amount: 4500,
-        status: 'cancelled' as TransactionStatus,
+        status: 'disputed' as TransactionStatus,
         counterpartyName: 'SustainableProducts GmbH',
         counterpartyId: 'sust-001',
         material: 'Reclaimed Textiles',
         quantity: '1000kg',
         invoiceNumber: 'INV-2023-004',
         paymentMethod: 'PayPal',
-        deliveryStatus: 'Cancelled',
-        notes: 'Order cancelled due to logistics issues.'
+        deliveryStatus: 'Disputed',
+        notes: 'Disputed due to material quality issues.'
       },
       {
         id: 'tx-005',
@@ -143,7 +143,7 @@ const TransactionsPageContent: React.FC = () => {
     ];
 
     // Types
-    type TransactionStatus = 'pending' | 'completed' | 'cancelled';
+    type TransactionStatus = 'request' | 'accept' | 'pickup' | 'delivery' | 'buyer confirmation' | 'completed' | 'disputed';
     type TransactionType = 'purchase' | 'sale';
 
     interface Transaction {
@@ -432,8 +432,12 @@ const TransactionsPageContent: React.FC = () => {
     const getStatusColor = (status: TransactionStatus) => {
       switch (status) {
         case 'completed': return 'success';
-        case 'pending': return 'warning';
-        case 'cancelled': return 'error';
+        case 'buyer confirmation': return 'success';
+        case 'accept': return 'info';
+        case 'pickup': return 'info';
+        case 'delivery': return 'info';
+        case 'request': return 'warning';
+        case 'disputed': return 'error';
         default: return 'default';
       }
     };
@@ -493,9 +497,13 @@ const TransactionsPageContent: React.FC = () => {
               onChange={(e) => handleFilterChange('status', e.target.value)}
               options={[
                 { value: 'all', label: 'All Statuses' },
-                { value: 'pending', label: 'Pending' },
+                { value: 'request', label: 'Request' },
+                { value: 'accept', label: 'Accepted' },
+                { value: 'pickup', label: 'Pickup' },
+                { value: 'delivery', label: 'Delivery' },
+                { value: 'buyer confirmation', label: 'Buyer Confirmation' },
                 { value: 'completed', label: 'Completed' },
-                { value: 'cancelled', label: 'Cancelled' }
+                { value: 'disputed', label: 'Disputed' }
               ]}
             />
           </FilterGroup>
@@ -684,10 +692,17 @@ const TransactionsPageContent: React.FC = () => {
               )}
               
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
-                {selectedTransaction.status === 'pending' && (
+                {selectedTransaction.status === 'request' && (
                   <>
-                    <Button variant="primary">Confirm Transaction</Button>
-                    <Button variant="error">Cancel Transaction</Button>
+                    <Button variant="primary">Accept Request</Button>
+                    <Button variant="error">Reject</Button>
+                  </>
+                )}
+                
+                {selectedTransaction.status === 'delivery' && (
+                  <>
+                    <Button variant="primary">Confirm Receipt</Button>
+                    <Button variant="error">Open Dispute</Button>
                   </>
                 )}
                 

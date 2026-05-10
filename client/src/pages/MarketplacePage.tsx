@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useChatContext } from '../contexts/ChatContext';
@@ -188,6 +188,7 @@ const MaterialCard = styled(motion.div)`
   overflow: hidden;
   box-shadow: ${({ theme }) => theme.shadows.md};
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
   
   &:hover {
     box-shadow: ${({ theme }) => theme.shadows.lg};
@@ -274,6 +275,7 @@ const MarketplacePage: React.FC = () => {
   const [filteredMaterials, setFilteredMaterials] = useState(mockMaterials);
   const [imageErrors, setImageErrors] = useState<{ [key: number]: boolean }>({});
   const { setPageContext } = useChatContext();
+  const navigate = useNavigate();
 
   // Set chat context
   useEffect(() => {
@@ -373,6 +375,7 @@ const MarketplacePage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              onClick={() => navigate(`/marketplace/${material.id}`)}
             >
               <MaterialImage
                 src={getImageSource(material)}

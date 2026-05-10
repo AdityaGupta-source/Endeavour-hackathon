@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
+import { evaluateListing, ListingEvaluation } from '../services/aiService';
 
 // Mock data for materials - Replace with API call in production
 const mockMaterialsDB: Record<number, any> = {
@@ -653,6 +654,89 @@ const AuditButton = styled.button<{ $requested?: boolean }>`
   }
 `;
 
+const ReEvalSection = styled.div`
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+`;
+
+const ReEvalButton = styled.button`
+  width: 100%;
+  padding: 0.85rem 1.5rem;
+  background: linear-gradient(135deg, rgba(0, 255, 163, 0.15), rgba(0, 200, 130, 0.1));
+  color: #00FFA3;
+  border: 1px solid rgba(0, 255, 163, 0.3);
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(0, 255, 163, 0.25), rgba(0, 200, 130, 0.2));
+    box-shadow: 0 0 20px rgba(0, 255, 163, 0.15);
+    transform: translateY(-2px);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const ReEvalResults = styled(motion.div)`
+  margin-top: 1rem;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(0, 255, 163, 0.06), rgba(0, 200, 130, 0.03));
+  border: 1px solid rgba(0, 255, 163, 0.15);
+  border-radius: 12px;
+`;
+
+const ReEvalHeader = styled.div`
+  font-weight: 700;
+  color: #00FFA3;
+  font-size: 1rem;
+  margin-bottom: 12px;
+`;
+
+const ReEvalScoreRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #A0AEC0;
+`;
+
+const ReEvalScoreValue = styled.span`
+  font-weight: 700;
+  color: #E2E8F0;
+  font-size: 1.1rem;
+`;
+
+const ReEvalBar = styled.div`
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 14px;
+`;
+
+const ReEvalBarFill = styled.div`
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+`;
+
+const ReEvalDetail = styled.div`
+  font-size: 0.9rem;
+  color: #CBD5E0;
+  margin: 5px 0;
+  line-height: 1.6;
+`;
+
 const MaterialDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const materialId = parseInt(id || '1');
@@ -665,6 +749,63 @@ const MaterialDetailPage: React.FC = () => {
   
   const [auditRequested, setAuditRequested] = useState(false);
   const [isProcessingAudit, setIsProcessingAudit] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [aiEvaluation, setAiEvaluation] = useState<ListingEvaluation | null>(null);
+
+  // Check marketplace mock DB first, then fall back to localStorage for user's own listings
+  useEffect(() => {
+    // Priority 1: Marketplace mock data (has rich detail)
+    if (mockMaterialsDB[materialId]) {
+      setMaterial(mockMaterialsDB[materialId]);
+      return;
+    }
+
+    // Priority 2: User's own listings from localStorage
+    const storedListings = localStorage.getItem('materialListings');
+    if (storedListings) {
+      const userListings = JSON.parse(storedListings);
+      const found = userListings.find((l: any) => l.id === materialId);
+      if (found) {
+        setMaterial({
+          id: found.id,
+          name: found.title || found.name,
+          category: found.category || 'General',
+          subcategory: found.subcategory || found.category || 'Mixed',
+          quantity: found.quantity || 'N/A',
+          minOrderQuantity: found.minOrderQuantity || '10 kg',
+          location: found.location || 'India',
+          price: found.price || 'Contact for price',
+          image: found.image || '',
+          description: found.description || 'No description provided.',
+          specifications: found.specifications || [
+            { name: 'Category', value: found.category || 'General' },
+            { name: 'Subcategory', value: found.subcategory || 'Mixed' },
+            { name: 'Condition', value: found.condition || 'Good' },
+            { name: 'Contamination', value: found.contaminationLevel || 'Low' },
+            { name: 'Listed On', value: found.createdAt || 'N/A' }
+          ],
+          seller: found.seller || {
+            id: 100,
+            name: 'You (My Listing)',
+            location: found.location || 'India',
+            rating: 5.0,
+            verified: true
+          },
+          sustainability: found.sustainability || {
+            carbonFootprint: 'Reduced vs virgin material',
+            certifications: ['Self-Declared'],
+            recycledContent: '100%'
+          },
+          availableFrom: found.createdAt || '2025-01-01',
+          availableUntil: '2026-12-31'
+        });
+        return;
+      }
+    }
+
+    // Fallback
+    setMaterial(getMockMaterial(materialId));
+  }, [materialId]);
 
   // Set chat context so the chatbot knows what material the user is viewing
   useEffect(() => {
@@ -728,6 +869,26 @@ const MaterialDetailPage: React.FC = () => {
       setIsProcessingAudit(false);
       alert('Physical Audit requested! A Resourcify certified expert will be dispatched within 48 hours to verify this material.');
     }, 1500);
+  };
+
+  const handleReEvaluate = async () => {
+    setIsEvaluating(true);
+    try {
+      const result = await evaluateListing({
+        title: material.name,
+        description: material.description,
+        category: material.category,
+        quantity: material.quantity,
+        condition: 'Good',
+        contaminationLevel: 'Low',
+        location: material.location,
+      });
+      setAiEvaluation(result);
+    } catch (err) {
+      alert('AI evaluation failed. Please try again.');
+    } finally {
+      setIsEvaluating(false);
+    }
   };
 
   // Handle image loading error

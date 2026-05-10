@@ -3,64 +3,69 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { evaluateListing, ListingEvaluation } from '../services/aiService';
 
 // Mock data - Replace with API call in production
 const mockListings = [
   {
-    id: 1,
+    id: 101,
     title: 'Recycled PET Flakes',
     description: 'High-quality recycled PET flakes, sorted and cleaned, suitable for food packaging.',
     category: 'Plastics',
     subcategory: 'PET',
     quantity: '5000 kg',
-    price: '€1.25 per kg',
-    location: 'Hamburg, Germany',
-    createdAt: '2023-03-15',
+    price: '₹105 per kg',
+    location: 'Mumbai, Maharashtra',
+    createdAt: '2025-11-15',
     status: 'active',
     views: 142,
-    inquiries: 7
+    inquiries: 7,
+    image: 'https://images.pexels.com/photos/4596401/pexels-photo-4596401.jpeg?auto=compress&cs=tinysrgb&w=600'
   },
   {
-    id: 2,
+    id: 102,
     title: 'Recovered Aluminum Scrap',
     description: 'Clean aluminum scrap from manufacturing process, high purity level.',
     category: 'Metals',
     subcategory: 'Aluminum',
     quantity: '2500 kg',
-    price: '€2.80 per kg',
-    location: 'Lyon, France',
-    createdAt: '2023-04-02',
+    price: '₹235 per kg',
+    location: 'Jamnagar, Gujarat',
+    createdAt: '2026-01-02',
     status: 'active',
     views: 98,
-    inquiries: 4
+    inquiries: 4,
+    image: 'https://images.pexels.com/photos/2881224/pexels-photo-2881224.jpeg?auto=compress&cs=tinysrgb&w=600'
   },
   {
-    id: 3,
+    id: 103,
     title: 'Post-Industrial Cotton Waste',
     description: 'Cotton waste from textile manufacturing, can be used for recycled yarn production.',
     category: 'Textiles',
     subcategory: 'Cotton',
     quantity: '1800 kg',
-    price: '€0.90 per kg',
-    location: 'Barcelona, Spain',
-    createdAt: '2023-02-28',
+    price: '₹75 per kg',
+    location: 'Tirupur, Tamil Nadu',
+    createdAt: '2026-02-28',
     status: 'pending',
     views: 0,
-    inquiries: 0
+    inquiries: 0,
+    image: 'https://images.pexels.com/photos/6869030/pexels-photo-6869030.jpeg?auto=compress&cs=tinysrgb&w=600'
   },
   {
-    id: 4,
+    id: 104,
     title: 'Recovered Wood Pulp',
     description: 'Wood pulp recovered from paper recycling process, suitable for low-grade paper products.',
     category: 'Paper & Pulp',
     subcategory: 'Wood Pulp',
     quantity: '10000 kg',
-    price: '€0.45 per kg',
-    location: 'Stockholm, Sweden',
-    createdAt: '2023-01-20',
+    price: '₹38 per kg',
+    location: 'Saharanpur, Uttar Pradesh',
+    createdAt: '2025-10-20',
     status: 'sold',
     views: 215,
-    inquiries: 12
+    inquiries: 12,
+    image: 'https://images.pexels.com/photos/5864250/pexels-photo-5864250.jpeg?auto=compress&cs=tinysrgb&w=600'
   }
 ];
 
@@ -140,12 +145,28 @@ const ListingCard = styled(motion.div)<{ status: string }>`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
   box-shadow: ${({ theme }) => theme.shadows.md};
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-top: 5px solid ${({ status, theme }) => 
     status === 'active' ? theme.colors.success :
     status === 'pending' ? theme.colors.warning :
     status === 'sold' ? theme.colors.info :
     theme.colors.primary.main
   };
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 255, 163, 0.15);
+  }
+`;
+
+const CardImage = styled.div<{ $src: string }>`
+  width: 100%;
+  height: 160px;
+  background-image: url(${({ $src }) => $src});
+  background-size: cover;
+  background-position: center;
+  background-color: #1A2332;
 `;
 
 const ListingHeader = styled.div`
@@ -298,11 +319,64 @@ const EmptyStateText = styled.p`
   line-height: 1.6;
 `;
 
+const AIResultBanner = styled(motion.div)`
+  margin-top: 1rem;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(0, 255, 163, 0.08), rgba(0, 200, 130, 0.05));
+  border: 1px solid rgba(0, 255, 163, 0.2);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: #E2E8F0;
+
+  .ai-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: #00FFA3;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+  }
+
+  .ai-score {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .ai-score-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .ai-score-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease;
+  }
+
+  .ai-price {
+    color: #00FFA3;
+    font-weight: 600;
+  }
+
+  .ai-detail {
+    margin: 4px 0;
+    line-height: 1.5;
+  }
+`;
+
 const MyListingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
   const [statusFilter, setStatusFilter] = useState('all');
   const [listings, setListings] = useState<any[]>([]);
+  const [evaluatingId, setEvaluatingId] = useState<number | null>(null);
+  const [aiResults, setAiResults] = useState<Record<number, ListingEvaluation>>({});
   
   // Redirect if not logged in
   if (!isLoggedIn) {
@@ -313,11 +387,17 @@ const MyListingsPage: React.FC = () => {
   useEffect(() => {
     const storedListings = localStorage.getItem('materialListings');
     if (storedListings) {
-      setListings(JSON.parse(storedListings));
+      const parsed = JSON.parse(storedListings);
+      // Check if stored data has old IDs (1-6) that overlap with marketplace — if so, reset
+      const hasOldIds = parsed.some((l: any) => l.id >= 1 && l.id <= 10);
+      if (hasOldIds) {
+        setListings(mockListings);
+        localStorage.setItem('materialListings', JSON.stringify(mockListings));
+      } else {
+        setListings(parsed);
+      }
     } else {
-      // If no listings in localStorage, use mock data as fallback
       setListings(mockListings);
-      // Store mock data in localStorage
       localStorage.setItem('materialListings', JSON.stringify(mockListings));
     }
   }, []);
@@ -327,46 +407,61 @@ const MyListingsPage: React.FC = () => {
     ? listings
     : listings.filter(listing => listing.status === statusFilter);
   
-  // Handle creating a new listing
   const handleCreateListing = () => {
     navigate('/create-listing');
   };
   
-  // Handle editing a listing
-  const handleEditListing = (id: number) => {
+  const handleEditListing = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     navigate(`/edit-listing/${id}`);
   };
   
-  // Handle deleting a listing
-  const handleDeleteListing = (id: number) => {
+  const handleDeleteListing = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     const listing = listings.find(item => item.id === id);
     if (listing && window.confirm(`Are you sure you want to delete "${listing.title}"? This action cannot be undone.`)) {
       const updatedListings = listings.filter(listing => listing.id !== id);
       setListings(updatedListings);
-      
-      // Update localStorage
       localStorage.setItem('materialListings', JSON.stringify(updatedListings));
-      
-      // Show confirmation to user
       alert('Listing has been deleted successfully.');
     }
   };
   
-  // Handle marking a listing as sold
-  const handleMarkAsSold = (id: number) => {
+  const handleMarkAsSold = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (window.confirm('Are you sure you want to mark this listing as sold? This cannot be undone.')) {
       const updatedListings = listings.map(listing => 
         listing.id === id ? { ...listing, status: 'sold' } : listing
       );
-      
       setListings(updatedListings);
-      
-      // Update localStorage
       localStorage.setItem('materialListings', JSON.stringify(updatedListings));
-      
-      // Show confirmation to user
       alert('Listing has been marked as sold.');
     }
+  };
+
+  const handleReEvaluate = async (listing: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEvaluatingId(listing.id);
+    try {
+      const result = await evaluateListing({
+        title: listing.title,
+        description: listing.description,
+        category: listing.category,
+        quantity: listing.quantity,
+        condition: 'Good',
+        contaminationLevel: 'Low',
+        location: listing.location,
+      });
+      setAiResults(prev => ({ ...prev, [listing.id]: result }));
+    } catch (err) {
+      alert('AI evaluation failed. Please try again.');
+    } finally {
+      setEvaluatingId(null);
+    }
+  };
+
+  const handleCardClick = (id: number) => {
+    navigate(`/marketplace/${id}`);
   };
   
   return (
@@ -409,7 +504,11 @@ const MyListingsPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
+              onClick={() => handleCardClick(listing.id)}
             >
+              {listing.image && (
+                <CardImage $src={listing.image} />
+              )}
               <ListingHeader>
                 <div>
                   <ListingTitle>{listing.title}</ListingTitle>
@@ -449,15 +548,8 @@ const MyListingsPage: React.FC = () => {
                 
                 <ButtonsContainer>
                   <ActionButton 
-                    variant="primary"
-                    onClick={() => navigate(`/marketplace/${listing.id}`)}
-                  >
-                    View
-                  </ActionButton>
-                  
-                  <ActionButton 
                     variant="secondary"
-                    onClick={() => handleEditListing(listing.id)}
+                    onClick={(e) => handleEditListing(listing.id, e)}
                   >
                     Edit
                   </ActionButton>
@@ -465,7 +557,7 @@ const MyListingsPage: React.FC = () => {
                   {listing.status === 'active' && (
                     <ActionButton 
                       variant="secondary"
-                      onClick={() => handleMarkAsSold(listing.id)}
+                      onClick={(e) => handleMarkAsSold(listing.id, e)}
                     >
                       Mark Sold
                     </ActionButton>
@@ -473,11 +565,40 @@ const MyListingsPage: React.FC = () => {
                   
                   <ActionButton 
                     variant="danger"
-                    onClick={() => handleDeleteListing(listing.id)}
+                    onClick={(e) => handleDeleteListing(listing.id, e)}
                   >
                     Delete
                   </ActionButton>
                 </ButtonsContainer>
+
+                {aiResults[listing.id] && (
+                  <AIResultBanner
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <div className="ai-header">🧠 Resourcify AI Evaluation</div>
+                    <div className="ai-score">
+                      <span>Score: {aiResults[listing.id].marketabilityScore}/100</span>
+                      <div className="ai-score-bar">
+                        <div 
+                          className="ai-score-fill" 
+                          style={{ 
+                            width: `${aiResults[listing.id].marketabilityScore}%`,
+                            background: aiResults[listing.id].marketabilityScore >= 70 
+                              ? '#00FFA3' 
+                              : aiResults[listing.id].marketabilityScore >= 40 
+                                ? '#FFD700' 
+                                : '#FF4444'
+                          }} 
+                        />
+                      </div>
+                    </div>
+                    <div className="ai-detail">💰 Suggested Price: <span className="ai-price">{aiResults[listing.id].suggestedPrice}</span></div>
+                    <div className="ai-detail">📊 Demand: {aiResults[listing.id].demandLevel}</div>
+                    <div className="ai-detail">💡 {aiResults[listing.id].tips?.[0] || 'Listing looks good!'}</div>
+                  </AIResultBanner>
+                )}
               </ListingContent>
               
               <ListingFooter>

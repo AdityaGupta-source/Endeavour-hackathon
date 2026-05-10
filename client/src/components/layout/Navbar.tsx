@@ -302,7 +302,7 @@ const Navbar: React.FC<NavbarProps> = ({
         <Logo to="/">
           <img src="/eco-logo.svg" alt="Logo" />
           <span>
-            Circular<strong>Eco</strong>
+            Resourcify
             <small>Materials Marketplace</small>
           </span>
         </Logo>

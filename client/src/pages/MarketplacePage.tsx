@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { useChatContext } from '../contexts/ChatContext';
 
 // Mock data - Replace with API call in production
 const mockMaterials = [
@@ -10,7 +11,7 @@ const mockMaterials = [
     name: 'Recycled Plastic Pellets',
     category: 'Plastics',
     quantity: '500 kg',
-    location: 'San Francisco, CA',
+    location: 'Mumbai, Maharashtra',
     price: '₹100/kg',
     image: 'https://images.pexels.com/photos/4596401/pexels-photo-4596401.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'High-quality recycled HDPE pellets suitable for injection molding.'
@@ -20,7 +21,7 @@ const mockMaterials = [
     name: 'Wood Offcuts',
     category: 'Wood',
     quantity: '200 kg',
-    location: 'Portland, OR',
+    location: 'Dehradun, Uttarakhand',
     price: '₹40/kg',
     image: 'https://images.pexels.com/photos/129733/pexels-photo-129733.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Clean pine offcuts from furniture manufacturing.'
@@ -30,7 +31,7 @@ const mockMaterials = [
     name: 'Aluminum Scrap',
     category: 'Metals',
     quantity: '300 kg',
-    location: 'Chicago, IL',
+    location: 'Jamnagar, Gujarat',
     price: '₹150/kg',
     image: 'https://images.pexels.com/photos/2881224/pexels-photo-2881224.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Clean aluminum scrap, primarily extrusion offcuts.'
@@ -40,7 +41,7 @@ const mockMaterials = [
     name: 'Cotton Fabric Remnants',
     category: 'Textiles',
     quantity: '150 kg',
-    location: 'New York, NY',
+    location: 'Tirupur, Tamil Nadu',
     price: '₹200/kg',
     image: 'https://images.pexels.com/photos/6869030/pexels-photo-6869030.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Organic cotton remnants from garment manufacturing.'
@@ -50,7 +51,7 @@ const mockMaterials = [
     name: 'Glass Cullet',
     category: 'Glass',
     quantity: '1000 kg',
-    location: 'Austin, TX',
+    location: 'Firozabad, Uttar Pradesh',
     price: '₹25/kg',
     image: 'https://images.pexels.com/photos/4255811/pexels-photo-4255811.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Mixed color glass cullet suitable for recycling.'
@@ -60,7 +61,7 @@ const mockMaterials = [
     name: 'Paper Pulp',
     category: 'Paper',
     quantity: '750 kg',
-    location: 'Seattle, WA',
+    location: 'Saharanpur, Uttar Pradesh',
     price: '₹35/kg',
     image: 'https://images.pexels.com/photos/5864250/pexels-photo-5864250.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Recycled paper pulp suitable for various paper products.'
@@ -272,6 +273,17 @@ const MarketplacePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMaterials, setFilteredMaterials] = useState(mockMaterials);
   const [imageErrors, setImageErrors] = useState<{ [key: number]: boolean }>({});
+  const { setPageContext } = useChatContext();
+
+  // Set chat context
+  useEffect(() => {
+    setPageContext({
+      pageName: 'Marketplace',
+      pageType: 'marketplace',
+      title: 'Browsing Marketplace',
+      details: `The user is browsing the marketplace with ${mockMaterials.length} listings available.\nCategories: ${categories.join(', ')}\nAvailable materials: ${mockMaterials.map(m => m.name + ' (' + m.price + ')').join(', ')}`,
+    });
+  }, [setPageContext]);
 
   // Handle image loading errors
   const handleImageError = (materialId: number, category: string) => {

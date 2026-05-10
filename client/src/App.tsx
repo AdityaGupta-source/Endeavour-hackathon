@@ -5,6 +5,7 @@ import GlobalStyles from './styles/GlobalStyles';
 import { theme } from './theme/theme';
 import Layout from './components/layout/Layout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ChatContextProvider } from './contexts/ChatContext';
 import AIChatbot from './components/common/AIChatbot';
 
 // Basic pages (eagerly loaded)
@@ -177,8 +178,10 @@ function App() {
     <ThemeProvider theme={theme}>
       <GlobalStyles />
       <AuthProvider>
-        <AppRoutes />
-        <AIChatbot />
+        <ChatContextProvider>
+          <AppRoutes />
+          <AIChatbot />
+        </ChatContextProvider>
       </AuthProvider>
     </ThemeProvider>
   );

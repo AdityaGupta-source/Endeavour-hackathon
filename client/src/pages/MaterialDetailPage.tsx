@@ -3,41 +3,218 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useChatContext } from '../contexts/ChatContext';
 
-// Mock data for a single material - Replace with API call in production
-const getMockMaterial = (id: number) => ({
-  id,
-  name: 'Recycled Plastic Pellets',
-  category: 'Plastics',
-  subcategory: 'HDPE',
-  quantity: '500 kg',
-  minOrderQuantity: '50 kg',
-  location: 'San Francisco, CA',
-  price: '₹100/kg',
-  image: 'https://images.pexels.com/photos/4596401/pexels-photo-4596401.jpeg?auto=compress&cs=tinysrgb&w=1200',
-  description: 'High-quality recycled HDPE pellets suitable for injection molding. These pellets are processed from post-consumer waste and have been cleaned, sorted, and processed to meet industry standards.',
-  specifications: [
-    { name: 'Material', value: 'High-Density Polyethylene (HDPE)' },
-    { name: 'Color', value: 'Mixed (primarily white/natural)' },
-    { name: 'Melt Flow Index', value: '0.8 g/10min' },
-    { name: 'Density', value: '0.95 g/cm³' },
-    { name: 'Processing Method', value: 'Injection Molding, Extrusion' }
-  ],
-  seller: {
-    id: 101,
-    name: 'EcoPlastics Inc.',
-    location: 'San Francisco, CA',
-    rating: 4.8,
-    verified: true
+// Mock data for materials - Replace with API call in production
+const mockMaterialsDB: Record<number, any> = {
+  1: {
+    id: 1,
+    name: 'Recycled Plastic Pellets',
+    category: 'Plastics',
+    subcategory: 'HDPE',
+    quantity: '500 kg',
+    minOrderQuantity: '50 kg',
+    location: 'Mumbai, Maharashtra',
+    price: '₹100/kg',
+    image: 'https://images.pexels.com/photos/4596401/pexels-photo-4596401.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    description: 'High-quality recycled HDPE pellets suitable for injection molding. These pellets are processed from post-consumer waste and have been cleaned, sorted, and processed to meet industry standards.',
+    specifications: [
+      { name: 'Material', value: 'High-Density Polyethylene (HDPE)' },
+      { name: 'Color', value: 'Mixed (primarily white/natural)' },
+      { name: 'Melt Flow Index', value: '0.8 g/10min' },
+      { name: 'Density', value: '0.95 g/cm³' },
+      { name: 'Processing Method', value: 'Injection Molding, Extrusion' }
+    ],
+    seller: {
+      id: 101,
+      name: 'EcoPlastics India Pvt Ltd',
+      location: 'Mumbai, Maharashtra',
+      rating: 4.8,
+      verified: true
+    },
+    sustainability: {
+      carbonFootprint: '70% reduction compared to virgin material',
+      certifications: ['GRS Certified', 'ISO 14001'],
+      recycledContent: '100%'
+    },
+    availableFrom: '2025-09-01',
+    availableUntil: '2026-03-31'
   },
-  sustainability: {
-    carbonFootprint: '70% reduction compared to virgin material',
-    certifications: ['GRS Certified', 'ISO 14001'],
-    recycledContent: '100%'
+  2: {
+    id: 2,
+    name: 'Wood Offcuts',
+    category: 'Wood',
+    subcategory: 'Pine',
+    quantity: '200 kg',
+    minOrderQuantity: '25 kg',
+    location: 'Dehradun, Uttarakhand',
+    price: '₹40/kg',
+    image: 'https://images.pexels.com/photos/129733/pexels-photo-129733.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    description: 'Clean pine offcuts sourced from furniture manufacturing units. Ideal for particleboard production, biomass energy, or artisanal woodworking. All pieces are untreated and free from chemical coatings.',
+    specifications: [
+      { name: 'Wood Type', value: 'Pine (Pinus roxburghii)' },
+      { name: 'Moisture Content', value: '12-15%' },
+      { name: 'Average Piece Size', value: '15-40 cm length' },
+      { name: 'Treatment', value: 'Untreated / Chemical-free' },
+      { name: 'Suitable For', value: 'Particleboard, Biomass, Crafts' }
+    ],
+    seller: {
+      id: 102,
+      name: 'GreenWood Solutions',
+      location: 'Dehradun, Uttarakhand',
+      rating: 4.5,
+      verified: true
+    },
+    sustainability: {
+      carbonFootprint: '85% reduction vs new timber harvesting',
+      certifications: ['FSC Recycled', 'ISO 14001'],
+      recycledContent: '100%'
+    },
+    availableFrom: '2025-10-01',
+    availableUntil: '2026-06-30'
   },
-  availableFrom: '2023-09-01',
-  availableUntil: '2023-12-31'
-});
+  3: {
+    id: 3,
+    name: 'Aluminum Scrap',
+    category: 'Metals',
+    subcategory: 'Aluminum',
+    quantity: '300 kg',
+    minOrderQuantity: '30 kg',
+    location: 'Jamnagar, Gujarat',
+    price: '₹150/kg',
+    image: 'https://images.pexels.com/photos/2881224/pexels-photo-2881224.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    description: 'Clean aluminum scrap primarily from extrusion offcuts and manufacturing waste. Pre-sorted and free from heavy contamination. Suitable for secondary smelting and re-extrusion into new profiles.',
+    specifications: [
+      { name: 'Alloy Grade', value: '6061 / 6063 Mix' },
+      { name: 'Form', value: 'Extrusion offcuts & sheet trim' },
+      { name: 'Purity', value: '95-98% Aluminum' },
+      { name: 'Contamination', value: 'Minimal paint residue (<2%)' },
+      { name: 'Processing Method', value: 'Smelting, Re-extrusion' }
+    ],
+    seller: {
+      id: 103,
+      name: 'MetalWorks India Ltd',
+      location: 'Jamnagar, Gujarat',
+      rating: 4.9,
+      verified: true
+    },
+    sustainability: {
+      carbonFootprint: '92% reduction vs virgin aluminum production',
+      certifications: ['R2 Certified', 'ISO 9001', 'ISO 14001'],
+      recycledContent: '100%'
+    },
+    availableFrom: '2025-08-15',
+    availableUntil: '2026-02-28'
+  },
+  4: {
+    id: 4,
+    name: 'Cotton Fabric Remnants',
+    category: 'Textiles',
+    subcategory: 'Cotton',
+    quantity: '150 kg',
+    minOrderQuantity: '20 kg',
+    location: 'Tirupur, Tamil Nadu',
+    price: '₹200/kg',
+    image: 'https://images.pexels.com/photos/6869030/pexels-photo-6869030.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    description: 'Premium organic cotton remnants from garment manufacturing. Pre-sorted by color (white, pastel, dark). Perfect for industrial wiping cloths, recycled yarn production, or stuffing material.',
+    specifications: [
+      { name: 'Fiber Composition', value: '100% Organic Cotton' },
+      { name: 'Color Groups', value: 'White (40%), Pastels (35%), Darks (25%)' },
+      { name: 'Average Piece Size', value: '20x20 cm to 60x80 cm' },
+      { name: 'Weave Type', value: 'Jersey knit & Woven mix' },
+      { name: 'Suitable For', value: 'Recycled yarn, Wiping cloths, Stuffing' }
+    ],
+    seller: {
+      id: 104,
+      name: 'FabricCycle Textiles',
+      location: 'Tirupur, Tamil Nadu',
+      rating: 4.6,
+      verified: true
+    },
+    sustainability: {
+      carbonFootprint: '60% reduction vs virgin cotton farming',
+      certifications: ['GOTS Certified', 'OEKO-TEX Standard 100'],
+      recycledContent: '100%'
+    },
+    availableFrom: '2025-07-01',
+    availableUntil: '2026-01-31'
+  },
+  5: {
+    id: 5,
+    name: 'Glass Cullet',
+    category: 'Glass',
+    subcategory: 'Mixed Color',
+    quantity: '1000 kg',
+    minOrderQuantity: '100 kg',
+    location: 'Firozabad, Uttar Pradesh',
+    price: '₹25/kg',
+    image: 'https://images.pexels.com/photos/4255811/pexels-photo-4255811.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    description: 'Mixed color glass cullet crushed and cleaned from post-consumer bottle and container collection. Suitable for glass manufacturing, fiberglass insulation, or decorative aggregate. Thoroughly washed and metal-free.',
+    specifications: [
+      { name: 'Glass Type', value: 'Soda-lime (container glass)' },
+      { name: 'Color Mix', value: 'Clear (50%), Green (30%), Amber (20%)' },
+      { name: 'Particle Size', value: '5-25 mm crushed' },
+      { name: 'Contamination', value: '<0.5% (metal-free, label-free)' },
+      { name: 'Suitable For', value: 'Re-melting, Fiberglass, Aggregate' }
+    ],
+    seller: {
+      id: 105,
+      name: 'ClearGlass Recyclers',
+      location: 'Firozabad, Uttar Pradesh',
+      rating: 4.3,
+      verified: false
+    },
+    sustainability: {
+      carbonFootprint: '30% reduction vs virgin glass production',
+      certifications: ['ISO 14001'],
+      recycledContent: '100%'
+    },
+    availableFrom: '2025-06-01',
+    availableUntil: '2026-05-31'
+  },
+  6: {
+    id: 6,
+    name: 'Paper Pulp',
+    category: 'Paper',
+    subcategory: 'Mixed Pulp',
+    quantity: '750 kg',
+    minOrderQuantity: '75 kg',
+    location: 'Saharanpur, Uttar Pradesh',
+    price: '₹35/kg',
+    image: 'https://images.pexels.com/photos/5864250/pexels-photo-5864250.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    description: 'Recycled paper pulp produced from sorted post-consumer office paper and cardboard. De-inked and processed into a clean slurry. Suitable for manufacturing tissue paper, packaging board, and egg trays.',
+    specifications: [
+      { name: 'Pulp Type', value: 'De-inked recycled pulp (DIP)' },
+      { name: 'Brightness', value: '72-78% ISO' },
+      { name: 'Freeness (CSF)', value: '350-450 ml' },
+      { name: 'Ash Content', value: '<8%' },
+      { name: 'Suitable For', value: 'Tissue, Packaging board, Egg trays' }
+    ],
+    seller: {
+      id: 106,
+      name: 'PaperLoop Industries',
+      location: 'Saharanpur, Uttar Pradesh',
+      rating: 4.4,
+      verified: true
+    },
+    sustainability: {
+      carbonFootprint: '40% reduction vs virgin wood pulp',
+      certifications: ['FSC Recycled', 'EPA Compliant'],
+      recycledContent: '100%'
+    },
+    availableFrom: '2025-11-01',
+    availableUntil: '2026-04-30'
+  }
+};
+
+// Fallback for unknown IDs
+const getMockMaterial = (id: number) => {
+  return mockMaterialsDB[id] || {
+    ...mockMaterialsDB[1],
+    id,
+    name: `Material #${id}`,
+  };
+};
 
 // Fallback images if the real images don't load - using Pexels for more reliable loading
 const materialFallbackImages = {
@@ -481,12 +658,23 @@ const MaterialDetailPage: React.FC = () => {
   const materialId = parseInt(id || '1');
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
+  const { setPageContext } = useChatContext();
   const [material, setMaterial] = useState(getMockMaterial(materialId));
   const [isOrdering, setIsOrdering] = useState(false);
   const [imageError, setImageError] = useState(false);
   
   const [auditRequested, setAuditRequested] = useState(false);
   const [isProcessingAudit, setIsProcessingAudit] = useState(false);
+
+  // Set chat context so the chatbot knows what material the user is viewing
+  useEffect(() => {
+    setPageContext({
+      pageName: 'Material Detail',
+      pageType: 'material-detail',
+      title: material.name,
+      details: `Material: ${material.name}\nCategory: ${material.category} (${material.subcategory})\nPrice: ${material.price}\nQuantity Available: ${material.quantity}\nMin Order: ${material.minOrderQuantity}\nLocation: ${material.seller.location}\nSeller: ${material.seller.name} (Rating: ${material.seller.rating}/5, ${material.seller.verified ? 'Verified' : 'Unverified'})\nCondition: ${material.description}\nSpecifications: ${material.specifications.map(s => s.name + ': ' + s.value).join(', ')}\nSustainability: ${material.sustainability.carbonFootprint}, Recycled Content: ${material.sustainability.recycledContent}, Certifications: ${material.sustainability.certifications.join(', ')}`,
+    });
+  }, [material, setPageContext]);
   
   // In a real application, you would fetch the material data from an API
   // useEffect(() => {
@@ -538,7 +726,7 @@ const MaterialDetailPage: React.FC = () => {
     setTimeout(() => {
       setAuditRequested(true);
       setIsProcessingAudit(false);
-      alert('Physical Audit requested! A ReValue certified expert will be dispatched within 48 hours to verify this material.');
+      alert('Physical Audit requested! A Resourcify certified expert will be dispatched within 48 hours to verify this material.');
     }, 1500);
   };
 
@@ -657,7 +845,7 @@ const MaterialDetailPage: React.FC = () => {
         </SustainabilitySection>
 
         <AiRecommendationsSection>
-          <AiHeader>🧠 ReValue AI Recommendations</AiHeader>
+          <AiHeader>🧠 Resourcify AI Recommendations</AiHeader>
           
           {mockComplianceWarnings.map(warning => (
             <ComplianceAlert key={warning.id} $level={warning.level}>
@@ -702,7 +890,7 @@ const MaterialDetailPage: React.FC = () => {
         
         <AuditSection>
           <AuditInfo>
-            <AuditTitle>🛡️ ReValue Certified Physical Audit</AuditTitle>
+            <AuditTitle>🛡️ Resourcify Certified Physical Audit</AuditTitle>
             <AuditDescription>
               Doubting the AI verification or need absolute certainty before making a bulk purchase? 
               Request a physical inspection. A certified local expert will physically inspect, swab, and verify this exact material batch.

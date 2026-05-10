@@ -379,14 +379,14 @@ const HomePage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            ReValue AI
+            Resourcify
           </HeroTitle>
           <HeroSubtitle
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            Not every waste stream should be reused blindly. ReValue AI checks if it is safe, legal, profitable, logistically feasible, and actually demanded.
+            Turn industrial waste into revenue. The intelligent B2B marketplace for buying and selling recovered materials.
           </HeroSubtitle>
 
           <ButtonContainer

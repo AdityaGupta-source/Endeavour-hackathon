@@ -169,7 +169,7 @@ const Footer: React.FC = () => {
         <FooterSection>
           <FooterLogo to="/">
             <img src="/eco-logo-light.svg" alt="Logo" />
-            CircularEco
+            Resourcify
           </FooterLogo>
           <FooterText>
             Connecting industries to transform waste into resources,
@@ -276,7 +276,7 @@ const Footer: React.FC = () => {
       
       <BottomFooter>
         <Copyright>
-          &copy; {currentYear} CircularEco. All rights reserved.
+          &copy; {currentYear} Resourcify. All rights reserved.
         </Copyright>
         <BottomLinks>
           <BottomLink to="/terms">Terms of Service</BottomLink>

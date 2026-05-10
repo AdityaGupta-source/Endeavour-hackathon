@@ -7,7 +7,7 @@ async function openRouterChat(messages: any[], model: string, options: any = {})
       "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
       "Content-Type": "application/json",
       "HTTP-Referer": window.location.origin,
-      "X-Title": "ReValue AI",
+      "X-Title": "Resourcify",
     },
     body: JSON.stringify({
       messages,
@@ -51,7 +51,7 @@ export async function evaluateListing(data: {
   contaminationLevel: string;
   location: string;
 }): Promise<ListingEvaluation> {
-  const prompt = `You are ReValue AI, an expert circular-economy marketplace analyst. Evaluate the following waste material listing and return a JSON object (no markdown, no code fences, pure JSON only).
+  const prompt = `You are Resourcify AI, an expert circular-economy marketplace analyst. Evaluate the following waste material listing and return a JSON object (no markdown, no code fences, pure JSON only).
 
 Listing Details:
 - Title: ${data.title}
@@ -118,24 +118,47 @@ Return this exact JSON structure:
 
 // ---------- AI CHATBOT ----------
 
-const systemPrompt = `You are ReValue AI Assistant, a friendly and knowledgeable customer support agent for the ReValue AI Circular Economy Marketplace. 
+const baseSystemPrompt = `You are Resourcify AI Assistant, a friendly and knowledgeable customer support agent for the Resourcify Circular Economy Marketplace. 
 
 Your role:
 - Help users navigate the platform (listing materials, finding buyers, managing transactions)
 - Answer questions about circular economy, material recycling, and sustainability
 - Help with pricing guidance and material quality assessment
-- Be concise, helpful, and professional
 - If you don't know something specific about the platform, provide general helpful guidance
-- Use emojis sparingly to be friendly
 
-Keep responses under 150 words unless the user asks for detailed information.`;
+FORMATTING RULES (very important):
+- Always structure your answers using bullet points (use • symbol)
+- Use **bold** for key terms or headings
+- Keep each bullet short and scannable (1-2 sentences max)
+- Add a blank line between sections for readability
+- Start with a short one-line summary, then bullet points
+- Use emojis sparingly at the start of key bullets for visual clarity
+- Keep total response under 150 words unless the user asks for detail`;
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
-const chatHistory: ChatMessage[] = [
-  { role: "system", content: systemPrompt },
-  { role: "assistant", content: "Understood! I am ReValue AI Assistant. How can I help you today?" }
+let chatHistory: ChatMessage[] = [
+  { role: "system", content: baseSystemPrompt },
+  { role: "assistant", content: "Understood! I am Resourcify AI Assistant. How can I help you today?" }
 ];
+
+let currentContextKey: string = '';
+
+export function injectPageContext(contextDescription: string) {
+  const newKey = contextDescription;
+  if (newKey === currentContextKey) return; // no change
+  currentContextKey = newKey;
+
+  const contextualSystemPrompt = contextDescription
+    ? `${baseSystemPrompt}\n\n--- CURRENT PAGE CONTEXT ---\nThe user is currently viewing the following on the platform. Use this context to provide highly relevant answers:\n${contextDescription}`
+    : baseSystemPrompt;
+
+  // Reset chat history with new context
+  chatHistory = [
+    { role: "system", content: contextualSystemPrompt },
+    { role: "assistant", content: "Understood! I am Resourcify AI Assistant. How can I help you today?" }
+  ];
+}
 
 export async function sendChatMessage(message: string): Promise<string> {
   chatHistory.push({ role: "user", content: message });
@@ -178,7 +201,7 @@ export interface ImageAnalysisResult {
 
 export async function analyzeWasteImage(base64Image: string): Promise<ImageAnalysisResult> {
   // Groq supports vision models – we use llama-3.2-90b-vision-preview
-  const prompt = `You are ReValue AI, a waste material identification expert. Analyze this image of waste/recyclable material and return a JSON object (no markdown, no code fences, pure JSON only).
+  const prompt = `You are Resourcify AI, a waste material identification expert. Analyze this image of waste/recyclable material and return a JSON object (no markdown, no code fences, pure JSON only).
 
 Return this exact JSON structure:
 {
@@ -220,7 +243,7 @@ Return this exact JSON structure:
       const fallbackCompletion = await openRouterChat(
         [{
           role: "user",
-          content: `You are ReValue AI. The user has uploaded an image of waste material but we cannot process it visually right now. Generate a reasonable placeholder analysis as JSON (no markdown, pure JSON only):
+          content: `You are Resourcify AI. The user has uploaded an image of waste material but we cannot process it visually right now. Generate a reasonable placeholder analysis as JSON (no markdown, pure JSON only):
 {
   "title": "Uploaded Material",
   "description": "Material uploaded for analysis. Please review the auto-filled details and correct as needed.",

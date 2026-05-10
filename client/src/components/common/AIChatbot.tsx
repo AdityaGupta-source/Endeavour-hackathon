@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sendChatMessage, clearChatHistory } from '../../services/aiService';
+import { sendChatMessage, clearChatHistory, injectPageContext } from '../../services/aiService';
+import { useChatContext } from '../../contexts/ChatContext';
 
 interface Message {
   id: number;
@@ -107,6 +108,16 @@ const HeaderTitle = styled.span`
   color: #FFFFFF;
 `;
 
+const HeaderSubtitle = styled.span`
+  font-size: 11px;
+  color: #00F0FF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  display: block;
+`;
+
 const HeaderStatus = styled.span`
   font-size: 11px;
   color: #00FFA3;
@@ -170,11 +181,40 @@ const MessageBubble = styled.div<{ $isUser: boolean }>`
   color: ${({ $isUser }) => $isUser ? '#0A0F16' : '#E2E8F0'};
   align-self: ${({ $isUser }) => $isUser ? 'flex-end' : 'flex-start'};
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
   word-break: break-word;
   box-shadow: ${({ $isUser }) => $isUser 
     ? '0 2px 8px rgba(0, 255, 163, 0.2)' 
     : '0 2px 8px rgba(0, 0, 0, 0.3)'};
+
+  .msg-bold {
+    font-weight: 700;
+    color: ${({ $isUser }) => $isUser ? '#0A0F16' : '#00FFA3'};
+  }
+
+  .msg-bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 4px 0;
+    padding-left: 2px;
+  }
+
+  .msg-bullet::before {
+    content: '•';
+    color: ${({ $isUser }) => $isUser ? '#0A0F16' : '#00FFA3'};
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-top: 0px;
+  }
+
+  .msg-line {
+    margin: 3px 0;
+  }
+
+  .msg-spacer {
+    height: 8px;
+  }
 `;
 
 const TypingIndicator = styled.div`
@@ -291,12 +331,59 @@ const QuickAction = styled.button`
   }
 `;
 
+// Helper component to render AI messages with bullet points and bold text
+const FormattedMessage: React.FC<{ text: string }> = ({ text }) => {
+  const lines = text.split('\n');
+  
+  return (
+    <>
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        
+        // Empty line = spacer
+        if (!trimmed) {
+          return <div key={i} className="msg-spacer" />;
+        }
+        
+        // Bullet point line (•, -, *, or numbered like "1.")
+        const isBullet = /^[•\-\*]/.test(trimmed) || /^\d+[\.\)]/.test(trimmed);
+        const cleanLine = isBullet 
+          ? trimmed.replace(/^[•\-\*]\s*/, '').replace(/^\d+[\.\)]\s*/, '')
+          : trimmed;
+        
+        // Render bold (**text**) within the line
+        const renderWithBold = (str: string) => {
+          const parts = str.split(/(\*\*[^*]+\*\*)/g);
+          return parts.map((part, j) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return <span key={j} className="msg-bold">{part.slice(2, -2)}</span>;
+            }
+            return <span key={j}>{part}</span>;
+          });
+        };
+        
+        if (isBullet) {
+          return (
+            <div key={i} className="msg-bullet">
+              <span>{renderWithBold(cleanLine)}</span>
+            </div>
+          );
+        }
+        
+        return <div key={i} className="msg-line">{renderWithBold(trimmed)}</div>;
+      })}
+    </>
+  );
+};
+
 const AIChatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { pageContext } = useChatContext();
+  const prevContextRef = useRef<string>('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -305,6 +392,16 @@ const AIChatbot: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Inject page context into AI when it changes
+  useEffect(() => {
+    if (pageContext.details && pageContext.details !== prevContextRef.current) {
+      prevContextRef.current = pageContext.details;
+      injectPageContext(pageContext.details);
+      // Clear messages when context changes so the chat feels fresh
+      setMessages([]);
+    }
+  }, [pageContext]);
 
   const handleSendMessage = async (text?: string) => {
     const messageText = text || inputValue.trim();
@@ -350,19 +447,75 @@ const AIChatbot: React.FC = () => {
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
-    if (isOpen) {
-      // Optionally clear chat on close
-      // clearChatHistory();
-      // setMessages([]);
+  };
+
+  // Dynamic quick actions based on page context
+  const getQuickActions = (): string[] => {
+    if (pageContext.quickActions) return pageContext.quickActions;
+    switch (pageContext.pageType) {
+      case 'material-detail':
+        return [
+          `Is this a fair price?`,
+          'What certifications should I check?',
+          'Is this material safe for my use?',
+          'Negotiate tips',
+        ];
+      case 'marketplace':
+        return [
+          'What materials are trending?',
+          'Help me find specific material',
+          'How to filter listings?',
+          'Pricing guidance',
+        ];
+      case 'create-listing':
+        return [
+          'How to write a good listing?',
+          'What price should I set?',
+          'Which category to choose?',
+          'Tips for better photos',
+        ];
+      case 'dashboard':
+        return [
+          'How to increase sales?',
+          'Explain my carbon impact',
+          'How to manage orders?',
+          'Revenue optimization tips',
+        ];
+      default:
+        return [
+          'How do I list materials?',
+          'Pricing guidance',
+          'What materials are in demand?',
+          'How does verification work?',
+        ];
     }
   };
 
-  const quickActions = [
-    'How do I list materials?',
-    'Pricing guidance',
-    'What materials are in demand?',
-    'How does verification work?',
-  ];
+  // Dynamic header subtitle
+  const getHeaderSubtitle = (): string | null => {
+    if (pageContext.title && pageContext.pageType !== 'general') {
+      return pageContext.title;
+    }
+    return null;
+  };
+
+  const getWelcomeText = (): string => {
+    switch (pageContext.pageType) {
+      case 'material-detail':
+        return `I can see you're looking at ${pageContext.title || 'a material'}. Ask me anything — pricing, quality, safety, or negotiation tips!`;
+      case 'marketplace':
+        return 'Browsing the marketplace? I can help you find the right materials, compare prices, or filter listings!';
+      case 'create-listing':
+        return 'Creating a new listing? I can help with pricing, descriptions, category selection, and tips to attract buyers!';
+      case 'dashboard':
+        return 'Looking at your dashboard? Ask me about your performance, carbon impact, or how to optimize your sales!';
+      default:
+        return 'Your intelligent assistant for the circular economy marketplace. Ask me anything about listing materials, finding buyers, or sustainability!';
+    }
+  };
+
+  const quickActions = getQuickActions();
+  const headerSubtitle = getHeaderSubtitle();
 
   return (
     <>
@@ -378,8 +531,12 @@ const AIChatbot: React.FC = () => {
               <HeaderLeft>
                 <AIAvatar>🤖</AIAvatar>
                 <HeaderInfo>
-                  <HeaderTitle>ReValue AI Assistant</HeaderTitle>
-                  <HeaderStatus>Online</HeaderStatus>
+                  <HeaderTitle>Resourcify AI Assistant</HeaderTitle>
+                  {headerSubtitle ? (
+                    <HeaderSubtitle title={headerSubtitle}>📌 {headerSubtitle}</HeaderSubtitle>
+                  ) : (
+                    <HeaderStatus>Online</HeaderStatus>
+                  )}
                 </HeaderInfo>
               </HeaderLeft>
               <CloseButton onClick={handleToggle}>✕</CloseButton>
@@ -388,9 +545,8 @@ const AIChatbot: React.FC = () => {
             <MessagesContainer>
               {messages.length === 0 && (
                 <WelcomeMessage>
-                  <strong>👋 Hi! I'm ReValue AI</strong>
-                  Your intelligent assistant for the circular economy marketplace.
-                  Ask me anything about listing materials, finding buyers, or sustainability!
+                  <strong>👋 Hi! I'm Resourcify AI</strong>
+                  {getWelcomeText()}
                   <QuickActions>
                     {quickActions.map((action, i) => (
                       <QuickAction key={i} onClick={() => handleSendMessage(action)}>
@@ -403,7 +559,7 @@ const AIChatbot: React.FC = () => {
 
               {messages.map(msg => (
                 <MessageBubble key={msg.id} $isUser={msg.sender === 'user'}>
-                  {msg.text}
+                  {msg.sender === 'user' ? msg.text : <FormattedMessage text={msg.text} />}
                 </MessageBubble>
               ))}
 
@@ -420,7 +576,7 @@ const AIChatbot: React.FC = () => {
               <ChatInput
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask ReValue AI..."
+                placeholder="Ask Resourcify AI..."
                 disabled={isTyping}
                 autoFocus
               />

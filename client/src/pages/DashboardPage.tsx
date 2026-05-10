@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useChatContext } from '../contexts/ChatContext';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { calculateCarbonOffset, CarbonOffsetData } from '../services/aiService';
@@ -485,6 +486,17 @@ const BreakdownValue = styled.span`
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { setPageContext } = useChatContext();
+
+  // Set chat context
+  useEffect(() => {
+    setPageContext({
+      pageName: 'Dashboard',
+      pageType: 'dashboard',
+      title: 'Your Dashboard',
+      details: `The user is viewing their dashboard.\nRole: ${user?.role || 'Seller'}\nStats: ${mockStats.totalTransactions} transactions, ${mockStats.activeListings} active listings, ${mockStats.pendingOrders} pending orders\nCarbon Saved: ${mockStats.carbonSaved}\nWaste Recycled: ${mockStats.wasteRecycled}\nRevenues: ${mockStats.revenues}`,
+    });
+  }, [user, setPageContext]);
   
   // Handler functions for button clicks
   const handleAddListing = () => {

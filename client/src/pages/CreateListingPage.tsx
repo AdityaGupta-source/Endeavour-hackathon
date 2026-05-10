@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useChatContext } from '../contexts/ChatContext';
 import { evaluateListing, ListingEvaluation, analyzeWasteImage, ImageAnalysisResult } from '../services/aiService';
 
 // Mock categories - would be fetched from API in production
@@ -503,10 +504,21 @@ const DemandBadge = styled.span<{ $level: string }>`
 const CreateListingPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
+  const { setPageContext } = useChatContext();
   const [category, setCategory] = useState('');
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Set chat context
+  useEffect(() => {
+    setPageContext({
+      pageName: 'Create Listing',
+      pageType: 'create-listing',
+      title: 'Creating a New Listing',
+      details: `The user is creating a new material listing on the marketplace.\nAvailable categories: ${materialCategories.map(c => c.name).join(', ')}\nThey may need help with: pricing, writing descriptions, choosing the right category, or understanding quality grades.`,
+    });
+  }, [setPageContext]);
   
   // Redirect if not logged in
   if (!isLoggedIn) {
@@ -733,7 +745,7 @@ const CreateListingPage: React.FC = () => {
                 Our AI will automatically identify and fill in the listing details for you.
               </UploadSubtext>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(0,255,163,0.1)', borderRadius: '20px', color: '#00FFA3', fontSize: '0.85rem' }}>
-                🤖 Powered by ReValue AI Vision
+                🤖 Powered by Resourcify AI Vision
               </div>
             </>
           )}
@@ -1065,7 +1077,7 @@ const CreateListingPage: React.FC = () => {
                 >
                   <AIResultsHeader>
                     <AIIcon>🧠</AIIcon>
-                    <AIResultsTitle>ReValue AI Analysis</AIResultsTitle>
+                    <AIResultsTitle>Resourcify AI Analysis</AIResultsTitle>
                   </AIResultsHeader>
 
                   <ScoreContainer>

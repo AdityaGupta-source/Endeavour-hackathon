@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { evaluateListing, ListingEvaluation } from '../services/aiService';
+import { evaluateListing, ListingEvaluation, analyzeWasteImage, ImageAnalysisResult } from '../services/aiService';
 
 // Mock categories - would be fetched from API in production
 const materialCategories = [
@@ -408,6 +408,82 @@ const InfoValue = styled.div`
   line-height: 1.4;
 `;
 
+// AI Image Upload Styles
+const ImageUploadZone = styled.div<{ $isDragging?: boolean }>`
+  border: 2px dashed ${({ $isDragging }) => $isDragging ? '#00FFA3' : '#1E2D3D'};
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: ${({ $isDragging }) => $isDragging ? 'rgba(0,255,163,0.05)' : 'linear-gradient(135deg, #0D1117, #131C28)'};
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    border-color: #00FFA3;
+    box-shadow: 0 0 20px rgba(0, 255, 163, 0.15);
+  }
+`;
+
+const UploadIcon = styled.div`
+  font-size: 3rem;
+  margin-bottom: 1rem;
+`;
+
+const UploadTitle = styled.h3`
+  font-size: 1.2rem;
+  color: #00FFA3;
+  margin-bottom: 0.5rem;
+`;
+
+const UploadSubtext = styled.p`
+  font-size: 0.9rem;
+  color: #A0AEC0;
+  margin-bottom: 1rem;
+`;
+
+const UploadPreview = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: #0A0F16;
+  border-radius: 12px;
+  border: 1px solid #1E2D3D;
+  margin-top: 1rem;
+  text-align: left;
+`;
+
+const PreviewImage = styled.img`
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #1E2D3D;
+`;
+
+const PreviewInfo = styled.div`
+  flex: 1;
+`;
+
+const ConfidenceBadge = styled.span<{ $confidence: number }>`
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: ${({ $confidence }) =>
+    $confidence >= 70 ? 'rgba(0, 255, 163, 0.15)' :
+    $confidence >= 40 ? 'rgba(255, 215, 0, 0.15)' :
+    'rgba(255, 51, 102, 0.15)'};
+  color: ${({ $confidence }) =>
+    $confidence >= 70 ? '#00FFA3' :
+    $confidence >= 40 ? '#FFD700' :
+    '#FF3366'};
+`;
+
 const DemandBadge = styled.span<{ $level: string }>`
   display: inline-block;
   padding: 4px 12px;
@@ -457,6 +533,63 @@ const CreateListingPage: React.FC = () => {
   });
   const [aiResult, setAiResult] = useState<ListingEvaluation | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  
+  // Image upload state
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [imageAnalysis, setImageAnalysis] = useState<ImageAnalysisResult | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle image upload and AI analysis
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file (JPEG, PNG, etc.)');
+      return;
+    }
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      setImagePreview(dataUrl);
+      
+      // Extract base64 (remove the data:image/...;base64, prefix)
+      const base64 = dataUrl.split(',')[1];
+      setUploadedImage(base64);
+      
+      // Analyze with AI
+      setIsAnalyzingImage(true);
+      setError('');
+      try {
+        const result = await analyzeWasteImage(base64);
+        setImageAnalysis(result);
+        
+        // Auto-fill the form with AI results
+        const matchedCategory = materialCategories.find(cat => cat.name === result.category);
+        if (matchedCategory) {
+          setCategory(result.category);
+          setSubcategories(matchedCategory.subcategories);
+        }
+        
+        setFormData(prev => ({
+          ...prev,
+          title: result.title || prev.title,
+          description: result.description || prev.description,
+          category: result.category || prev.category,
+          subcategory: result.subcategory || prev.subcategory,
+          condition: result.condition || prev.condition,
+          contaminationLevel: result.contaminationLevel || prev.contaminationLevel,
+        }));
+      } catch (err) {
+        setError('Image analysis failed. Please fill in the form manually.');
+      } finally {
+        setIsAnalyzingImage(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
   
   // Handle category change
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -561,6 +694,86 @@ const CreateListingPage: React.FC = () => {
           </Subtitle>
         </motion.div>
       </PageHeader>
+
+      {/* AI Image Upload Zone */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <ImageUploadZone
+          $isDragging={isDragging}
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            const file = e.dataTransfer.files[0];
+            if (file) handleImageUpload(file);
+          }}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageUpload(file);
+            }}
+          />
+          
+          {!imagePreview && !isAnalyzingImage && (
+            <>
+              <UploadIcon>📸</UploadIcon>
+              <UploadTitle>AI-Powered Smart Listing</UploadTitle>
+              <UploadSubtext>
+                Drop a photo of your waste material here, or click to browse.<br/>
+                Our AI will automatically identify and fill in the listing details for you.
+              </UploadSubtext>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(0,255,163,0.1)', borderRadius: '20px', color: '#00FFA3', fontSize: '0.85rem' }}>
+                🤖 Powered by ReValue AI Vision
+              </div>
+            </>
+          )}
+          
+          {isAnalyzingImage && (
+            <>
+              <UploadIcon>🔍</UploadIcon>
+              <UploadTitle>Analyzing your material...</UploadTitle>
+              <AILoadingBar />
+              <UploadSubtext>Our AI is identifying the material type, condition, and market value.</UploadSubtext>
+            </>
+          )}
+          
+          {imagePreview && !isAnalyzingImage && imageAnalysis && (
+            <UploadPreview onClick={(e) => e.stopPropagation()}>
+              <PreviewImage src={imagePreview} alt="Uploaded material" />
+              <PreviewInfo>
+                <div style={{ fontSize: '1rem', fontWeight: 600, color: '#FFF', marginBottom: '4px' }}>
+                  ✅ {imageAnalysis.title}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: '#A0AEC0', marginBottom: '8px' }}>
+                  {imageAnalysis.category} / {imageAnalysis.subcategory} · {imageAnalysis.condition}
+                </div>
+                <ConfidenceBadge $confidence={imageAnalysis.confidence}>
+                  {imageAnalysis.confidence}% confidence
+                </ConfidenceBadge>
+                <span style={{ marginLeft: '8px', fontSize: '0.8rem', color: '#A0AEC0' }}>
+                  Suggested: {imageAnalysis.suggestedPrice}
+                </span>
+              </PreviewInfo>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                style={{ padding: '8px 14px', background: '#1E2D3D', borderRadius: '8px', cursor: 'pointer', color: '#00FFA3', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+              >
+                🔄 Re-scan
+              </div>
+            </UploadPreview>
+          )}
+        </ImageUploadZone>
+      </motion.div>
       
       <FormContainer
         initial={{ opacity: 0, y: 20 }}

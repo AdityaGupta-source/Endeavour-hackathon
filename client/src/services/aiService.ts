@@ -1,9 +1,29 @@
-import Groq from 'groq-sdk';
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-
-// dangerouslyAllowBrowser is required because we are calling Groq from the React frontend (hackathon mode)
-const groq = new Groq({ apiKey: GROQ_API_KEY, dangerouslyAllowBrowser: true });
+async function openRouterChat(messages: any[], model: string, options: any = {}) {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": window.location.origin,
+      "X-Title": "ReValue AI",
+    },
+    body: JSON.stringify({
+      messages,
+      model,
+      max_tokens: options.max_tokens || 1000,
+      ...options
+    })
+  });
+  
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} ${err}`);
+  }
+  
+  return response.json();
+}
 
 // ---------- LISTING EVALUATION ----------
 
@@ -60,17 +80,11 @@ Return this exact JSON structure:
 }`;
 
   try {
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.5,
-      response_format: { type: "json_object" },
-    });
+    const completion = await openRouterChat(
+      [{ role: "user", content: prompt }],
+      "openai/gpt-4o-mini",
+      { temperature: 0.5, response_format: { type: "json_object" } }
+    );
 
     const text = completion.choices[0]?.message?.content || "{}";
     
@@ -104,9 +118,6 @@ Return this exact JSON structure:
 
 // ---------- AI CHATBOT ----------
 
-// Use Groq's message format for chat history
-type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
-
 const systemPrompt = `You are ReValue AI Assistant, a friendly and knowledgeable customer support agent for the ReValue AI Circular Economy Marketplace. 
 
 Your role:
@@ -119,6 +130,8 @@ Your role:
 
 Keep responses under 150 words unless the user asks for detailed information.`;
 
+type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
 const chatHistory: ChatMessage[] = [
   { role: "system", content: systemPrompt },
   { role: "assistant", content: "Understood! I am ReValue AI Assistant. How can I help you today?" }
@@ -128,12 +141,11 @@ export async function sendChatMessage(message: string): Promise<string> {
   chatHistory.push({ role: "user", content: message });
 
   try {
-    const completion = await groq.chat.completions.create({
-      messages: chatHistory,
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.7,
-      max_tokens: 500,
-    });
+    const completion = await openRouterChat(
+      chatHistory,
+      "openai/gpt-4o-mini",
+      { temperature: 0.7, max_tokens: 500 }
+    );
     
     const reply = completion.choices[0]?.message?.content || "Sorry, I couldn't process that.";
     chatHistory.push({ role: "assistant", content: reply });
@@ -141,13 +153,161 @@ export async function sendChatMessage(message: string): Promise<string> {
     return reply;
   } catch (error) {
     console.warn("Chat API limit reached. Using fallback.", error);
-    chatHistory.pop(); // Remove the failed user message
+    chatHistory.pop();
     return "I am currently receiving a high volume of requests. However, for your hackathon demo, you can assume I would provide helpful advice about pricing, logistics, and material quality! Try asking me again in a minute.";
   }
 }
 
 export function clearChatHistory() {
-  // Keep the system prompt and initial greeting
   chatHistory.length = 2;
 }
 
+// ---------- AI IMAGE ANALYSIS (Vision) ----------
+
+export interface ImageAnalysisResult {
+  title: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  condition: string;
+  contaminationLevel: string;
+  estimatedQuantity: string;
+  suggestedPrice: string;
+  confidence: number;
+}
+
+export async function analyzeWasteImage(base64Image: string): Promise<ImageAnalysisResult> {
+  // Groq supports vision models – we use llama-3.2-90b-vision-preview
+  const prompt = `You are ReValue AI, a waste material identification expert. Analyze this image of waste/recyclable material and return a JSON object (no markdown, no code fences, pure JSON only).
+
+Return this exact JSON structure:
+{
+  "title": "<a marketplace listing title for this material, e.g. 'Clean PET Plastic Flakes'>",
+  "description": "<a 2-3 sentence description of the material visible in the image, suitable for a marketplace listing>",
+  "category": "<one of: Plastics, Metals, Paper & Pulp, Textiles, Glass, Organics, Construction, Electronics>",
+  "subcategory": "<a specific subcategory within the category>",
+  "condition": "<one of: clean, mixed, baled, raw>",
+  "contaminationLevel": "<one of: none, low, medium, high>",
+  "estimatedQuantity": "<rough estimate if visible, e.g. '500 kg', or 'Unable to estimate'>",
+  "suggestedPrice": "<realistic price range, e.g. '$0.80 - $1.50 per kg'>",
+  "confidence": <number 0-100, how confident you are in the analysis>
+}`;
+
+  try {
+    const completion = await openRouterChat(
+      [{
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
+        ]
+      }],
+      "openai/gpt-4o",
+      { temperature: 0.3, max_tokens: 1000 }
+    );
+
+    const text = completion.choices[0]?.message?.content || "{}";
+    const jsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    try {
+      return JSON.parse(jsonStr) as ImageAnalysisResult;
+    } catch {
+      throw new Error("JSON Parsing failed");
+    }
+  } catch (error) {
+    console.warn("Vision AI failed, using text-only fallback.", error);
+    try {
+      const fallbackCompletion = await openRouterChat(
+        [{
+          role: "user",
+          content: `You are ReValue AI. The user has uploaded an image of waste material but we cannot process it visually right now. Generate a reasonable placeholder analysis as JSON (no markdown, pure JSON only):
+{
+  "title": "Uploaded Material",
+  "description": "Material uploaded for analysis. Please review the auto-filled details and correct as needed.",
+  "category": "Plastics",
+  "subcategory": "Other",
+  "condition": "mixed",
+  "contaminationLevel": "low",
+  "estimatedQuantity": "Unable to estimate from image",
+  "suggestedPrice": "Market rate - verify manually",
+  "confidence": 30
+}`
+        }],
+        "openai/gpt-4o-mini",
+        { temperature: 0.3, response_format: { type: "json_object" }, max_tokens: 1000 }
+      );
+      const fallbackText = fallbackCompletion.choices[0]?.message?.content || "{}";
+      return JSON.parse(fallbackText) as ImageAnalysisResult;
+    } catch {
+      return {
+        title: "Uploaded Material",
+        description: "Material uploaded for analysis. Please review the auto-filled details and correct as needed.",
+        category: "Plastics",
+        subcategory: "Other",
+        condition: "mixed",
+        contaminationLevel: "low",
+        estimatedQuantity: "Unable to estimate from image",
+        suggestedPrice: "Market rate - verify manually",
+        confidence: 30,
+      };
+    }
+  }
+}
+
+// ---------- CARBON OFFSET CALCULATOR ----------
+
+export interface CarbonOffsetData {
+  co2SavedKg: number;
+  waterSavedLiters: number;
+  energySavedKwh: number;
+  treesEquivalent: number;
+  landfillDiverted: number;
+  breakdown: { material: string; co2Saved: number; percentage: number }[];
+}
+
+export function calculateCarbonOffset(materials: { category: string; quantityKg: number }[]): CarbonOffsetData {
+  // Science-backed CO2 emission factors (kg CO2e saved per kg recycled vs virgin production)
+  const emissionFactors: Record<string, { co2: number; water: number; energy: number }> = {
+    'Plastics':     { co2: 1.5,  water: 70,   energy: 5.0  },
+    'Metals':       { co2: 4.0,  water: 40,   energy: 14.0 },
+    'Paper & Pulp': { co2: 0.9,  water: 26,   energy: 2.5  },
+    'Textiles':     { co2: 3.6,  water: 100,  energy: 6.0  },
+    'Glass':        { co2: 0.3,  water: 5,    energy: 1.2  },
+    'Organics':     { co2: 0.5,  water: 15,   energy: 0.8  },
+    'Construction': { co2: 0.2,  water: 8,    energy: 0.5  },
+    'Electronics':  { co2: 10.0, water: 200,  energy: 25.0 },
+    'Wood':         { co2: 0.7,  water: 20,   energy: 1.8  },
+    'Paper':        { co2: 0.9,  water: 26,   energy: 2.5  },
+  };
+
+  let totalCO2 = 0;
+  let totalWater = 0;
+  let totalEnergy = 0;
+  let totalWeight = 0;
+  const breakdownMap: Record<string, number> = {};
+
+  for (const mat of materials) {
+    const factors = emissionFactors[mat.category] || emissionFactors['Plastics'];
+    const co2 = mat.quantityKg * factors.co2;
+    totalCO2 += co2;
+    totalWater += mat.quantityKg * factors.water;
+    totalEnergy += mat.quantityKg * factors.energy;
+    totalWeight += mat.quantityKg;
+    breakdownMap[mat.category] = (breakdownMap[mat.category] || 0) + co2;
+  }
+
+  const breakdown = Object.entries(breakdownMap).map(([material, co2Saved]) => ({
+    material,
+    co2Saved: Math.round(co2Saved),
+    percentage: totalCO2 > 0 ? Math.round((co2Saved / totalCO2) * 100) : 0,
+  }));
+
+  return {
+    co2SavedKg: Math.round(totalCO2),
+    waterSavedLiters: Math.round(totalWater),
+    energySavedKwh: Math.round(totalEnergy),
+    treesEquivalent: Math.round(totalCO2 / 22), // 1 tree absorbs ~22kg CO2/year
+    landfillDiverted: Math.round(totalWeight),
+    breakdown,
+  };
+}

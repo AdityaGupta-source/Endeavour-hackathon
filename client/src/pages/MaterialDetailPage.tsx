@@ -295,8 +295,7 @@ const CertificationBadge = styled.span`
   color: ${({ theme }) => theme.colors.success};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: 0.75rem;
-  font-size: 0.75rem;
-}
+`;
 
 const AiRecommendationsSection = styled.div`
   margin-top: 2rem;

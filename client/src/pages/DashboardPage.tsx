@@ -1,9 +1,10 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect } from 'react';
+import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { calculateCarbonOffset, CarbonOffsetData } from '../services/aiService';
 
 const revenueData = [
   { name: 'Jan', revenue: 4000 },
@@ -361,6 +362,126 @@ const ViewLink = styled.a`
   }
 `;
 
+// Carbon Offset Widget Styles
+const carbonGlow = keyframes`
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 255, 163, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(0, 255, 163, 0.4); }
+`;
+
+const countUp = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const CarbonWidget = styled(motion.div)`
+  background: linear-gradient(135deg, #0D1117 0%, #0A1A15 50%, #0D1117 100%);
+  border: 1px solid #1E3D2D;
+  border-radius: 16px;
+  overflow: hidden;
+  animation: ${carbonGlow} 3s ease-in-out infinite;
+`;
+
+const CarbonHeader = styled.div`
+  padding: 1.5rem;
+  border-bottom: 1px solid #1E3D2D;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const CarbonHeaderIcon = styled.span`
+  font-size: 1.5rem;
+`;
+
+const CarbonHeaderTitle = styled.h2`
+  font-size: 1.25rem;
+  color: #00FFA3;
+  margin: 0;
+`;
+
+const CarbonContent = styled.div`
+  padding: 1.5rem;
+`;
+
+const CarbonStatsRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const CarbonStatBox = styled.div`
+  background: rgba(0, 255, 163, 0.05);
+  border: 1px solid rgba(0, 255, 163, 0.15);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  animation: ${countUp} 0.6s ease-out backwards;
+`;
+
+const CarbonStatIcon = styled.div`
+  font-size: 1.8rem;
+  margin-bottom: 0.4rem;
+`;
+
+const CarbonStatValue = styled.div`
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #00FFA3;
+  margin-bottom: 2px;
+`;
+
+const CarbonStatLabel = styled.div`
+  font-size: 0.75rem;
+  color: #A0AEC0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+`;
+
+const CarbonBreakdown = styled.div`
+  margin-top: 1rem;
+`;
+
+const BreakdownTitle = styled.h4`
+  font-size: 0.9rem;
+  color: #A0AEC0;
+  margin-bottom: 0.75rem;
+`;
+
+const BreakdownBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.6rem;
+`;
+
+const BreakdownLabel = styled.span`
+  font-size: 0.8rem;
+  color: #E2E8F0;
+  min-width: 80px;
+`;
+
+const BreakdownTrack = styled.div`
+  flex: 1;
+  height: 8px;
+  background: #1E2D3D;
+  border-radius: 4px;
+  overflow: hidden;
+`;
+
+const BreakdownFill = styled(motion.div)<{ $color: string }>`
+  height: 100%;
+  background: ${({ $color }) => $color};
+  border-radius: 4px;
+`;
+
+const BreakdownValue = styled.span`
+  font-size: 0.8rem;
+  color: #00FFA3;
+  min-width: 60px;
+  text-align: right;
+`;
+
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -385,7 +506,24 @@ const DashboardPage: React.FC = () => {
   const handleViewImpactReport = () => {
     navigate('/transactions');
   };
+
+  // Carbon Offset Calculator
+  const [carbonData, setCarbonData] = useState<CarbonOffsetData | null>(null);
   
+  useEffect(() => {
+    // Calculate carbon offset based on mock transaction data
+    const tradedMaterials = [
+      { category: 'Plastics', quantityKg: 500 },
+      { category: 'Wood', quantityKg: 200 },
+      { category: 'Metals', quantityKg: 150 },
+      { category: 'Textiles', quantityKg: 75 },
+      { category: 'Glass', quantityKg: 1000 },
+      { category: 'Paper', quantityKg: 750 },
+    ];
+    setCarbonData(calculateCarbonOffset(tradedMaterials));
+  }, []);
+
+  const breakdownColors = ['#00FFA3', '#00F0FF', '#FFD700', '#FF3366', '#A78BFA', '#F97316'];
   return (
     <PageContainer>
       <Header>
@@ -492,6 +630,68 @@ const DashboardPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Carbon Offset Calculator Widget */}
+          {carbonData && (
+            <CarbonWidget
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.07 }}
+            >
+              <CarbonHeader>
+                <CarbonHeaderIcon>🌍</CarbonHeaderIcon>
+                <CarbonHeaderTitle>Your Environmental Impact</CarbonHeaderTitle>
+              </CarbonHeader>
+              <CarbonContent>
+                <CarbonStatsRow>
+                  <CarbonStatBox style={{ animationDelay: '0.1s' }}>
+                    <CarbonStatIcon>🌱</CarbonStatIcon>
+                    <CarbonStatValue>{carbonData.co2SavedKg.toLocaleString()}</CarbonStatValue>
+                    <CarbonStatLabel>kg CO₂ Saved</CarbonStatLabel>
+                  </CarbonStatBox>
+                  <CarbonStatBox style={{ animationDelay: '0.2s' }}>
+                    <CarbonStatIcon>💧</CarbonStatIcon>
+                    <CarbonStatValue>{carbonData.waterSavedLiters.toLocaleString()}</CarbonStatValue>
+                    <CarbonStatLabel>Liters Water Saved</CarbonStatLabel>
+                  </CarbonStatBox>
+                  <CarbonStatBox style={{ animationDelay: '0.3s' }}>
+                    <CarbonStatIcon>⚡</CarbonStatIcon>
+                    <CarbonStatValue>{carbonData.energySavedKwh.toLocaleString()}</CarbonStatValue>
+                    <CarbonStatLabel>kWh Energy Saved</CarbonStatLabel>
+                  </CarbonStatBox>
+                  <CarbonStatBox style={{ animationDelay: '0.4s' }}>
+                    <CarbonStatIcon>🌳</CarbonStatIcon>
+                    <CarbonStatValue>{carbonData.treesEquivalent}</CarbonStatValue>
+                    <CarbonStatLabel>Trees Equivalent</CarbonStatLabel>
+                  </CarbonStatBox>
+                </CarbonStatsRow>
+
+                <CarbonBreakdown>
+                  <BreakdownTitle>CO₂ Savings by Material</BreakdownTitle>
+                  {carbonData.breakdown.map((item, index) => (
+                    <BreakdownBar key={item.material}>
+                      <BreakdownLabel>{item.material}</BreakdownLabel>
+                      <BreakdownTrack>
+                        <BreakdownFill
+                          $color={breakdownColors[index % breakdownColors.length]}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${item.percentage}%` }}
+                          transition={{ duration: 1, delay: 0.3 + index * 0.1, ease: 'easeOut' }}
+                        />
+                      </BreakdownTrack>
+                      <BreakdownValue>{item.co2Saved} kg</BreakdownValue>
+                    </BreakdownBar>
+                  ))}
+                </CarbonBreakdown>
+
+                <div style={{ marginTop: '1.5rem', padding: '12px', background: 'rgba(0,255,163,0.08)', borderRadius: '10px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.85rem', color: '#A0AEC0' }}>
+                    🎯 You've diverted <strong style={{ color: '#00FFA3' }}>{carbonData.landfillDiverted.toLocaleString()} kg</strong> of materials from landfill!
+                  </span>
+                </div>
+              </CarbonContent>
+            </CarbonWidget>
+          )}
           
           <Card
             initial={{ opacity: 0, y: 20 }}

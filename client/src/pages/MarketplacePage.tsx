@@ -11,7 +11,7 @@ const mockMaterials = [
     category: 'Plastics',
     quantity: '500 kg',
     location: 'San Francisco, CA',
-    price: '$1.20/kg',
+    price: '₹100/kg',
     image: 'https://images.pexels.com/photos/4596401/pexels-photo-4596401.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'High-quality recycled HDPE pellets suitable for injection molding.'
   },
@@ -21,7 +21,7 @@ const mockMaterials = [
     category: 'Wood',
     quantity: '200 kg',
     location: 'Portland, OR',
-    price: '$0.50/kg',
+    price: '₹40/kg',
     image: 'https://images.pexels.com/photos/129733/pexels-photo-129733.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Clean pine offcuts from furniture manufacturing.'
   },
@@ -31,7 +31,7 @@ const mockMaterials = [
     category: 'Metals',
     quantity: '300 kg',
     location: 'Chicago, IL',
-    price: '$1.80/kg',
+    price: '₹150/kg',
     image: 'https://images.pexels.com/photos/2881224/pexels-photo-2881224.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Clean aluminum scrap, primarily extrusion offcuts.'
   },
@@ -41,7 +41,7 @@ const mockMaterials = [
     category: 'Textiles',
     quantity: '150 kg',
     location: 'New York, NY',
-    price: '$2.50/kg',
+    price: '₹200/kg',
     image: 'https://images.pexels.com/photos/6869030/pexels-photo-6869030.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Organic cotton remnants from garment manufacturing.'
   },
@@ -51,7 +51,7 @@ const mockMaterials = [
     category: 'Glass',
     quantity: '1000 kg',
     location: 'Austin, TX',
-    price: '$0.30/kg',
+    price: '₹25/kg',
     image: 'https://images.pexels.com/photos/4255811/pexels-photo-4255811.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Mixed color glass cullet suitable for recycling.'
   },
@@ -61,7 +61,7 @@ const mockMaterials = [
     category: 'Paper',
     quantity: '750 kg',
     location: 'Seattle, WA',
-    price: '$0.45/kg',
+    price: '₹35/kg',
     image: 'https://images.pexels.com/photos/5864250/pexels-photo-5864250.jpeg?auto=compress&cs=tinysrgb&w=600',
     description: 'Recycled paper pulp suitable for various paper products.'
   },

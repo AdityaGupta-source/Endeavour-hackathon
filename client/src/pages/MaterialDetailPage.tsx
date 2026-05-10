@@ -13,7 +13,7 @@ const getMockMaterial = (id: number) => ({
   quantity: '500 kg',
   minOrderQuantity: '50 kg',
   location: 'San Francisco, CA',
-  price: '$1.20/kg',
+  price: '₹100/kg',
   image: 'https://images.pexels.com/photos/4596401/pexels-photo-4596401.jpeg?auto=compress&cs=tinysrgb&w=1200',
   description: 'High-quality recycled HDPE pellets suitable for injection molding. These pellets are processed from post-consumer waste and have been cleaned, sorted, and processed to meet industry standards.',
   specifications: [
@@ -415,6 +415,67 @@ const StatValue = styled.div<{ $highlight?: boolean }>`
   color: ${({ $highlight, theme }) => $highlight ? theme.colors.success : theme.colors.text.primary};
 `;
 
+const AuditSection = styled.div`
+  margin-top: 2rem;
+  background: linear-gradient(145deg, #1a2235, #0a0f16);
+  padding: 1.5rem;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+`;
+
+const AuditInfo = styled.div`
+  flex: 1;
+`;
+
+const AuditTitle = styled.h3`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  color: #FFD700;
+  margin-bottom: 0.5rem;
+`;
+
+const AuditDescription = styled.p`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  line-height: 1.5;
+`;
+
+const AuditButton = styled.button<{ $requested?: boolean }>`
+  padding: 0.75rem 1.5rem;
+  background: ${({ $requested }) => $requested ? 'rgba(255, 215, 0, 0.1)' : 'linear-gradient(135deg, #FFD700, #F5A623)'};
+  color: ${({ $requested }) => $requested ? '#FFD700' : '#0A0F16'};
+  border: ${({ $requested }) => $requested ? '1px solid #FFD700' : 'none'};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: ${({ $requested }) => $requested ? 'default' : 'pointer'};
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  
+  &:hover {
+    transform: ${({ $requested }) => $requested ? 'none' : 'translateY(-2px)'};
+    box-shadow: ${({ $requested }) => $requested ? 'none' : '0 4px 12px rgba(255, 215, 0, 0.3)'};
+  }
+  
+  &:disabled {
+    opacity: ${({ $requested }) => $requested ? 1 : 0.7};
+    cursor: ${({ $requested }) => $requested ? 'default' : 'not-allowed'};
+    transform: none;
+  }
+`;
+
 const MaterialDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const materialId = parseInt(id || '1');
@@ -423,6 +484,9 @@ const MaterialDetailPage: React.FC = () => {
   const [material, setMaterial] = useState(getMockMaterial(materialId));
   const [isOrdering, setIsOrdering] = useState(false);
   const [imageError, setImageError] = useState(false);
+  
+  const [auditRequested, setAuditRequested] = useState(false);
+  const [isProcessingAudit, setIsProcessingAudit] = useState(false);
   
   // In a real application, you would fetch the material data from an API
   // useEffect(() => {
@@ -461,6 +525,21 @@ const MaterialDetailPage: React.FC = () => {
     
     // In a real application, you would handle the contact process here
     alert(`Contact ${material.seller.name} for more information`);
+  };
+
+  const handleRequestAudit = () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    
+    setIsProcessingAudit(true);
+    // Simulate payment and processing
+    setTimeout(() => {
+      setAuditRequested(true);
+      setIsProcessingAudit(false);
+      alert('Physical Audit requested! A ReValue certified expert will be dispatched within 48 hours to verify this material.');
+    }, 1500);
   };
 
   // Handle image loading error
@@ -608,19 +687,37 @@ const MaterialDetailPage: React.FC = () => {
           <LogisticsGrid>
             <StatBox>
               <StatLabel>Estimated Transport Cost</StatLabel>
-              <StatValue>$150.00</StatValue>
+              <StatValue>₹12,500</StatValue>
             </StatBox>
             <StatBox>
               <StatLabel>Material Value ({material.quantity})</StatLabel>
-              <StatValue>$600.00</StatValue>
+              <StatValue>₹50,000</StatValue>
             </StatBox>
             <StatBox style={{ gridColumn: '1 / -1', background: 'rgba(0, 255, 163, 0.1)' }}>
               <StatLabel>Expected Net Value</StatLabel>
-              <StatValue $highlight>$450.00</StatValue>
+              <StatValue $highlight>₹37,500</StatValue>
             </StatBox>
           </LogisticsGrid>
         </LogisticsSection>
         
+        <AuditSection>
+          <AuditInfo>
+            <AuditTitle>🛡️ ReValue Certified Physical Audit</AuditTitle>
+            <AuditDescription>
+              Doubting the AI verification or need absolute certainty before making a bulk purchase? 
+              Request a physical inspection. A certified local expert will physically inspect, swab, and verify this exact material batch.
+            </AuditDescription>
+          </AuditInfo>
+          <AuditButton 
+            onClick={handleRequestAudit} 
+            disabled={auditRequested || isProcessingAudit}
+            $requested={auditRequested}
+          >
+            {isProcessingAudit ? 'Processing Payment...' : 
+             auditRequested ? '✓ Audit Requested' : 
+             'Request Audit (₹4,500)'}
+          </AuditButton>
+        </AuditSection>
         
         <SellerSection>
           <SellerHeader>

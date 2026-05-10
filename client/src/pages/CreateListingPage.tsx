@@ -649,7 +649,7 @@ const CreateListingPage: React.FC = () => {
         contaminationLevel: formData.contaminationLevel,
         verificationLevel: formData.verificationLevel,
         quantity: `${formData.quantity} ${formData.unit}`,
-        price: `€${formData.price} ${formData.priceUnit}`,
+        price: `₹${formData.price} ${formData.priceUnit}`,
         location: formData.location,
         createdAt: new Date().toISOString().split('T')[0],
         status: 'active',

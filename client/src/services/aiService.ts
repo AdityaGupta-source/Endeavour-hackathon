@@ -66,7 +66,7 @@ Listing Details:
 Return this exact JSON structure:
 {
   "score": <number 1-10, how good this listing is>,
-  "expectedPrice": "<realistic market price range string, e.g. '$0.80 - $1.50 per kg'>",
+  "expectedPrice": "<realistic market price range string, e.g. '₹80 - ₹120 per kg'>",
   "suggestions": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"],
   "potentialBuyers": [
     {"name": "<company/industry name>", "industry": "<sector>", "reason": "<why they'd buy>"},
@@ -98,7 +98,7 @@ Return this exact JSON structure:
     // High-quality fallback data for hackathon demo if API limit is hit
     return {
       score: 8,
-      expectedPrice: '€1.20 - €1.50 per kg',
+      expectedPrice: '₹100 - ₹150 per kg',
       suggestions: [
         'Add high-resolution photos of the material', 
         'Include exact moisture content percentage', 
@@ -189,7 +189,7 @@ Return this exact JSON structure:
   "condition": "<one of: clean, mixed, baled, raw>",
   "contaminationLevel": "<one of: none, low, medium, high>",
   "estimatedQuantity": "<rough estimate if visible, e.g. '500 kg', or 'Unable to estimate'>",
-  "suggestedPrice": "<realistic price range, e.g. '$0.80 - $1.50 per kg'>",
+  "suggestedPrice": "<realistic price range, e.g. '₹80 - ₹120 per kg'>",
   "confidence": <number 0-100, how confident you are in the analysis>
 }`;
 
